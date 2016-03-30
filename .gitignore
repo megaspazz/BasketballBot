@@ -1,8 +1,3 @@
-# Whitelist #
-#############
-!Basketball/lib/*
-!Basketball/Exe/*
-
 # Compiled source #
 ###################
 *.com
@@ -280,3 +275,8 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+# Whitelist #
+#############
+!Basketball/lib/*
+!Basketball/Exe/*
