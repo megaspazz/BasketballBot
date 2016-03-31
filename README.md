@@ -23,3 +23,10 @@
 3. In the console that comes up, you can type a series of commands, notably:
   * `test` runs the bot.  Make sure that the basket will not change direction during the shot, i.e. make sure that it's not too close to the edges.  Note that it takes around 200 ms to take a shot.
   * `quit` exits the program.
+
+## Acknowledgements
+1. [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
+  * Helping brainstorm ideas.
+  * Determining the MouseClickDrag speed to be 1 (no longer used).
+  * Lots of help testing the project.
+  * Moral support.
