@@ -16,6 +16,7 @@ namespace Basketball
 {
 	class Program
 	{
+        private static string PRECOMP_DIR = @"Precomp";
 		static void Main(string[] args)
 		{
 			AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
@@ -28,6 +29,23 @@ namespace Basketball
 				string input = raw.ToUpper();
 				switch (input)
 				{
+                    case "GEN":
+                        if (!Directory.Exists(PRECOMP_DIR))
+                        {
+                            Directory.CreateDirectory(PRECOMP_DIR);
+                        }
+                        for (int x = -72; x <= 72; x++)
+                        {
+                            for (int y = -72; y <= 72; y++)
+                            {
+                                string file = string.Format("{0}_{1}.ahk", x, y);
+                                string path = Path.Combine(PRECOMP_DIR, file);
+                                string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 1, R", x, y);
+                                File.WriteAllText(path, cmd);
+                                Console.WriteLine("Finished: {0}, {1}", x, y);
+                            }
+                        }
+                        break;
 					case "CURSOR":
 						Point pt = Cursor.Position;
 						Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
@@ -50,7 +68,7 @@ namespace Basketball
                         IntPtr self = WindowWrapper.GetForegroundWindow();
 
                         Stopwatch tmr = new Stopwatch();
-                        double vel = (int)(1.0 * CalculateVelocity(handle, 50));
+                        double vel = (int)(1.0 * CalculateVelocity(handle, 100));
                         double v = TransformVelocity(vel);
                         Rectangle rect = WindowWrapper.GetClientArea(handle);
                         tmr.Start();
@@ -112,13 +130,16 @@ namespace Basketball
 
         private static void Shoot(Point ball, Point hoop)
         {
-            double dx = (hoop.X - ball.X) * 0.80;
+            double dx = (hoop.X - ball.X) * 0.777;
             double dy = hoop.Y - ball.Y;
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)(dx / r * 72);
             int y = (int)(dy / r * 72);
-            string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 1, R", x, y);
-            RunAHKString(cmd, TEMP_FILE);
+            //string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 1, R", x, y);
+            //RunAHKString(cmd, TEMP_FILE);
+            string file = string.Format("{0}_{1}.ahk", x, y);
+            string path = Path.Combine(PRECOMP_DIR, file);
+            AutoHotKey.RunAHK(path);
             //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
             //Thread.Sleep(15);
             //Cursor.Position = new Point(ball.X + x, ball.Y + y);
@@ -192,7 +213,7 @@ namespace Basketball
             return 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds;
         }
 
-        private static readonly double[] VELOCITIES = { 0, 88, 176 };
+        private static readonly double[] VELOCITIES = { 0, 80, 160 };
         private static double TransformVelocity(double vel)
         {
             int sgn = Math.Sign(vel);
