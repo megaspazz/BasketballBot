@@ -368,7 +368,7 @@ namespace Basketball
 
 		private static Point FindAnyBasketPoint(Bitmap24 b24)
 		{
-			int dx = Math.Max(1, BASKET_WIDTH - 2);
+			int dx = Math.Max(1, BASKET_WIDTH - 4);
 			int dy = Math.Max(1, BASKET_HEIGHT - 2);
 			for (int y = 50; y < b24.Bitmap.Height; y += dy)
 			{
