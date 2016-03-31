@@ -233,7 +233,7 @@ namespace Basketball
 					left = mid + 1;
 				}
 			}
-			return new Point(x, BALL_Y);
+			return new Point(x + BALL_WIDTH / 2, BALL_Y);
         }
 
 		private static int FindAnyBasketballPointX(Bitmap24 b24)
