@@ -30,4 +30,5 @@
   * Determining the MouseClickDrag speed to be 1 (no longer used).
   * Lots of help testing the project.
   * Finding a plethora bugs that were exterminated mercilessly.
+  * Top-tier proofreading and editing the documentation.
   * Moral support.

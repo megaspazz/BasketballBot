@@ -108,7 +108,7 @@ namespace Basketball
 						if (!ball.IsEmpty && !rim.IsEmpty)
 						{
 							Console.WriteLine("absolute ball: {0}", ball);
-							Console.WriteLine("absolute basket: {1}", rim);
+							Console.WriteLine("absolute basket: {0}", basket);
 							Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
 							Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
 							WindowWrapper.BringToFront(handle);
