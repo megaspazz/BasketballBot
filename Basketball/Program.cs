@@ -81,6 +81,17 @@ namespace Basketball
                     case "CALC":
                         Console.WriteLine(CalculateVelocity(handle, 500));
                         break;
+					case "BOUNDS":
+						Rectangle bounds = EstimateBasketBorder(handle, 16000);
+						Console.WriteLine(bounds);
+						break;
+					case "BOUNCE":
+						Rectangle fakeBounds = new Rectangle(0, 0, 17, 10);
+						Point ans = PredictPosition(new Point(3, 1), new double[] { 1, 1 }, 119, fakeBounds);
+						Console.WriteLine(fakeBounds);
+						Console.WriteLine(fakeBounds.Bottom);
+						Console.WriteLine(ans);
+						break;
 					case "TEST":
                         //Thread.Sleep(100);
                         //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
@@ -283,7 +294,11 @@ namespace Basketball
             Stopwatch sw = new Stopwatch();
             sw.Start();
             Point p1 = FindBasket(handle);
-            Thread.Sleep(time);
+			int rem = (int)(time - sw.ElapsedMilliseconds);
+			if (rem > 0)
+			{
+				Thread.Sleep(rem);
+			}
             sw.Stop();
             Point p2 = FindBasket(handle);
 			//Console.WriteLine(p1.X - p2.X);
@@ -293,6 +308,26 @@ namespace Basketball
 			//Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
             return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
+
+		private static Rectangle EstimateBasketBorder(IntPtr handle, int time)
+		{
+			int left = int.MaxValue, rite = 0, top = int.MaxValue, bot = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+			while (sw.ElapsedMilliseconds < time)
+			{
+				Point pt = FindBasket(handle);
+				left = Math.Min(left, pt.X);
+				rite = Math.Max(rite, pt.X);
+				top = Math.Min(top, pt.Y);
+				bot = Math.Max(bot, pt.Y);
+			}
+			if (left > rite || bot > top)
+			{
+				return Rectangle.Empty;
+			}
+			return new Rectangle(left, top, rite - left + 1, bot - top + 1);
+		}
 
         private static readonly double[] VELOCITIES_X = { 0, 85, 170 };
         private static readonly double[] VELOCITIES_Y = { 0 };
@@ -382,6 +417,45 @@ namespace Basketball
 				}
 			}
 			return Point.Empty;
+		}
+
+		private static Point PredictPosition(Point start, double[] v, double t, Rectangle bounds)
+		{
+			int dx = (int)(v[0] * t);
+			int dy = (int)(v[1] * t);
+			if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0)
+			{
+				return new Point(start.X + dx, start.Y + dy);
+			}
+			dx %= (2 * bounds.Width);
+			dy %= (2 * bounds.Height);
+			int x = (int)(start.X + dx);
+			int y = (int)(start.Y + dy);
+			for (int i = 0; i < 2; i++)
+			{
+				if (x < bounds.Left)
+				{
+					x = Reflect(x, bounds.Left);
+				}
+				if (x > bounds.Right)
+				{
+					x = Reflect(x, bounds.Right);
+				}
+				if (y < bounds.Top)
+				{
+					y = Reflect(y, bounds.Top);
+				}
+				if (y > bounds.Bottom)
+				{
+					y = Reflect(y, bounds.Bottom);
+				}
+			}
+			return new Point(x, y);
+		}
+
+		private static int Reflect(int pos, int axis)
+		{
+			return 2 * axis - pos;
 		}
 
 		private static int[] GetBasketHeight(Bitmap24 b24, int x, int y)
