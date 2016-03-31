@@ -12,6 +12,8 @@ using AutoHotKeyNET;
 using FastBitmap;
 using System.Diagnostics;
 
+using WindowsInput;
+
 namespace Basketball
 {
 	class Program
@@ -84,9 +86,9 @@ namespace Basketball
 
                         //Drag(here.X, here.Y, basket.X, basket.Y);
                         WindowWrapper.BringToFront(handle);
-                        for (int i = 0; i < 3; i++)
+                        for (int i = 0; i < 8; i++)
                         {
-                            double SHOT_TIME = 0.9;
+                            double SHOT_TIME = 0.8;
                             int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
                             int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
                             Point start = new Point(here.X, here.Y);
@@ -138,11 +140,22 @@ namespace Basketball
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)(dx / r * 72);
             int y = (int)(dy / r * 72);
-            //string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 1, R", x, y);
+
+            //string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 0, R", x, y);
             //RunAHKString(cmd, TEMP_FILE);
-            string file = string.Format("{0}_{1}.ahk", x, y);
-            string path = Path.Combine(PRECOMP_DIR, file);
-            AutoHotKey.RunAHK(path);
+
+            InputSimulator sim = new InputSimulator();
+            sim.Mouse.LeftButtonDown();
+            Thread.Sleep(5);
+            sim.Mouse.MoveMouseBy(x, y);
+            Thread.Sleep(5);
+            sim.Mouse.LeftButtonUp();
+            Thread.Sleep(5);
+
+            //string file = string.Format("{0}_{1}.ahk", x, y);
+            //string path = Path.Combine(PRECOMP_DIR, file);
+            //AutoHotKey.RunAHK(path);
+
             //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
             //Thread.Sleep(15);
             //Cursor.Position = new Point(ball.X + x, ball.Y + y);
@@ -217,7 +230,7 @@ namespace Basketball
         }
 
         private static readonly double[] VELOCITIES_X = { 0, 85, 170 };
-        private static readonly double[] VELOCITIES_Y = { 0, 45 };
+        private static readonly double[] VELOCITIES_Y = { 0 };
         private static double[] TransformVelocity(double[] vel)
         {
             int sgnX = Math.Sign(vel[0]);
