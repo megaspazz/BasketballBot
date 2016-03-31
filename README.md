@@ -5,7 +5,7 @@
 2. Run the following git commands:
   1. `git init`
   2. `git remote add origin https://github.com/megaspazz/BasketballBot`
-  3. `gite pull origin master`
+  3. `git pull origin master`
 
 ## Install and Configure Bluestacks 2
 1. Download and install [Bluestacks 2](http://www.bluestacks.com).
