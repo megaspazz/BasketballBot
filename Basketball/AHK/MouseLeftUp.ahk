@@ -1,1 +1,1 @@
-﻿Click up
+﻿Send {Click up}
