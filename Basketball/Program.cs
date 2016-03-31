@@ -68,8 +68,8 @@ namespace Basketball
                         IntPtr self = WindowWrapper.GetForegroundWindow();
 
                         Stopwatch tmr = new Stopwatch();
-                        double vel = (int)(1.0 * CalculateVelocity(handle, 100));
-                        double v = TransformVelocity(vel);
+                        double[] vel = CalculateVelocity(handle, 100);
+                        double[] v = TransformVelocity(vel);
                         Rectangle rect = WindowWrapper.GetClientArea(handle);
                         tmr.Start();
                         Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
@@ -83,11 +83,14 @@ namespace Basketball
                         bmp.Dispose();
 
                         //Drag(here.X, here.Y, basket.X, basket.Y);
+                        WindowWrapper.BringToFront(handle);
                         for (int i = 0; i < 3; i++)
                         {
-                            int d = (int)((0.911 + tmr.ElapsedMilliseconds / 1000.0) * v);
+                            double SHOT_TIME = 0.9;
+                            int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
+                            int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
                             Point start = new Point(here.X, here.Y);
-                            Point target = new Point(basket.X + d, basket.Y);
+                            Point target = new Point(basket.X + dx, basket.Y + dy);
                             Cursor.Position = start;
                             Shoot(start, target);
                         }
@@ -130,7 +133,7 @@ namespace Basketball
 
         private static void Shoot(Point ball, Point hoop)
         {
-            double dx = (hoop.X - ball.X) * 0.777;
+            double dx = (hoop.X - ball.X) * 0.7;
             double dy = hoop.Y - ball.Y;
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)(dx / r * 72);
@@ -197,36 +200,47 @@ namespace Basketball
             return rim;
         }
 
-        private static double CalculateVelocity(IntPtr handle, int time)
+        private static double[] CalculateVelocity(IntPtr handle, int time)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
             Point p1 = FindBasket(handle);
-            Console.WriteLine(p1);
             Thread.Sleep(time);
             sw.Stop();
             Point p2 = FindBasket(handle);
-            Console.WriteLine(p2);
             Console.WriteLine(p1.X - p2.X);
+            Console.WriteLine(p1.Y - p2.Y);
             Console.WriteLine(sw.ElapsedMilliseconds);
             Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
-            return 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds;
+            Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
+            return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
 
-        private static readonly double[] VELOCITIES = { 0, 80, 160 };
-        private static double TransformVelocity(double vel)
+        private static readonly double[] VELOCITIES_X = { 0, 85, 170 };
+        private static readonly double[] VELOCITIES_Y = { 0, 45 };
+        private static double[] TransformVelocity(double[] vel)
         {
-            int sgn = Math.Sign(vel);
-            double pos = Math.Abs(vel);
-            double best = int.MaxValue;
-            foreach (int v in VELOCITIES)
+            int sgnX = Math.Sign(vel[0]);
+            double posX = Math.Abs(vel[0]);
+            double bestX = int.MaxValue;
+            foreach (int vx in VELOCITIES_X)
             {
-                if (Math.Abs(pos - v) < Math.Abs(pos - best))
+                if (Math.Abs(posX - vx) < Math.Abs(posX - bestX))
                 {
-                    best = v;
+                    bestX = vx;
                 }
             }
-            return sgn * best;
+            int sgnY = Math.Sign(vel[1]);
+            double posY = Math.Abs(vel[1]);
+            double bestY = int.MaxValue;
+            foreach (int vy in VELOCITIES_Y)
+            {
+                if (Math.Abs(posY - vy) < Math.Abs(posY - bestY))
+                {
+                    bestY = vy;
+                }
+            }
+            return new double[] { sgnX * bestX, sgnY * bestY };
         }
 
         private static readonly int BASKET_WIDTH = 116;
