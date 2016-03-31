@@ -48,15 +48,35 @@ namespace Basketball
                             }
                         }
                         break;
+					case "BENCH":
+						Bitmap bmpSS = new Bitmap("trial.png");
+						Bitmap24 bmp24 = new Bitmap24(bmpSS);
+						bmp24.Lock();
+						Stopwatch sw = new Stopwatch();
+						sw.Start();
+						Point ballPt = FindBasketball(bmp24);
+						Point basketPt = FindBasket(bmp24);
+						sw.Stop();
+						bmp24.Unlock();
+						bmpSS.Dispose();
+						Console.WriteLine("basket: {0}, ball: {1}, {2} [ms]", basketPt, ballPt, sw.ElapsedMilliseconds);
+						break;
 					case "CURSOR":
 						Point pt = Cursor.Position;
 						Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
 						break;
-                    case "IMAGE":
+					case "IMAGE":
+						Stopwatch stopwatch = new Stopwatch();
+						stopwatch.Start();
                         IntPtr hWnd = WindowWrapper.GetHandleFromCursor();
+						Console.WriteLine("window name: " + WindowWrapper.GetText(hWnd));
                         Bitmap img = WindowWrapper.TakeClientPicture(hWnd);
+						Console.WriteLine("pixels captured = {0} x {1} = {2}", img.Width, img.Height, img.Width * img.Height);
+						Console.WriteLine("pixels per ms: {0} px/ms", (double)img.Width * img.Height / stopwatch.ElapsedMilliseconds);
+						Console.WriteLine("ss time: {0} [ms]", stopwatch.ElapsedMilliseconds);
+						stopwatch.Restart();
                         img.Save("test.bmp");
-                        Console.WriteLine(WindowWrapper.GetText(hWnd));
+						Console.WriteLine("save time: {0} [ms]", stopwatch.ElapsedMilliseconds);
                         break;
                     case "CALC":
                         Console.WriteLine(CalculateVelocity(handle, 500));
@@ -70,7 +90,7 @@ namespace Basketball
                         IntPtr self = WindowWrapper.GetForegroundWindow();
 
                         Stopwatch tmr = new Stopwatch();
-                        double[] vel = CalculateVelocity(handle, 100);
+                        double[] vel = CalculateVelocity(handle, 160);
                         double[] v = TransformVelocity(vel);
                         Rectangle rect = WindowWrapper.GetClientArea(handle);
                         tmr.Start();
@@ -187,20 +207,53 @@ namespace Basketball
             AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
         }
 
-        private static readonly int BALL_Y = 644;
-        private static readonly int BALL_WIDTH = 130;
+        private static readonly int BALL_Y = 643;
+        private static readonly int BALL_WIDTH = 132;
         private static Point FindBasketball(Bitmap24 b24)
         {
-            for (int x = BALL_Y / 2; x < b24.Bitmap.Width; x++)
-            {
-                int[] arr = b24.GetPixel(x, BALL_Y);
-                if (arr[0] < 255 || arr[1] < 255 || arr[2] < 255)
-                {
-                    return new Point(x + BALL_WIDTH / 2, BALL_Y);
-                }
-            }
-            return Point.Empty;
+			int xp = FindAnyBasketballPointX(b24);
+			if (xp == 0)
+			{
+				return Point.Empty;
+			}
+			int left = Math.Max(200, xp - BALL_WIDTH);
+			int rite = xp;
+			int x = xp;
+			while (left <= rite)
+			{
+				int mid = (left + rite) / 2;
+				int[] arr = b24.GetPixel(mid, BALL_Y);
+				if (!WhitePixel(arr))
+				{
+					x = mid;
+					rite = mid - 1;
+				}
+				else
+				{
+					left = mid + 1;
+				}
+			}
+			return new Point(x, BALL_Y);
         }
+
+		private static int FindAnyBasketballPointX(Bitmap24 b24)
+		{
+			int dx = Math.Max(1, BALL_WIDTH - 2);
+			for (int x = 200; x < 1080; x += dx)
+			{
+				int[] arr = b24.GetPixel(x, BALL_Y);
+				if (!WhitePixel(arr))
+				{
+					return x;
+				}
+			}
+			return 0;
+		}
+
+		private static bool WhitePixel(int[] arr)
+		{
+			return (arr[0] == 255 && arr[1] == 255 && arr[2] == 255);
+		}
 
         private static Point FindBasket(IntPtr handle)
         {
@@ -256,23 +309,88 @@ namespace Basketball
             return new double[] { sgnX * bestX, sgnY * bestY };
         }
 
-        private static readonly int BASKET_WIDTH = 116;
+        private static readonly int BASKET_WIDTH = 112;
         private static readonly int BASKET_HEIGHT = 6;
         private static Point FindBasket(Bitmap24 b24)
-        {
-            for (int y = 50; y < b24.Bitmap.Height; y++)
-            {
-                for (int x = 5; x < b24.Bitmap.Width; x++)
-                {
-                    int[] arr = b24.GetPixel(x, y);
-                    if (arr[0] == 255 && arr[1] == 38 && arr[2] == 15)
-                    {
-                        return new Point(x + BASKET_WIDTH / 2, y + BASKET_HEIGHT / 2);
-                    }
-                }
-            }
-            return Point.Empty;
+		{
+			Point pt = FindAnyBasketPoint(b24);
+			if (pt.IsEmpty)
+			{
+				return Point.Empty;
+			}
+			int[] arr = GetBasketHeight(b24, pt.X, pt.Y);
+			if (arr[0] < BASKET_HEIGHT)
+			{
+				pt.X -= 5;
+				arr = GetBasketHeight(b24, pt.X, pt.Y);
+			}
+			if (arr[0] < BASKET_HEIGHT)
+			{
+				pt.X += 10;
+				arr = GetBasketHeight(b24, pt.X, pt.Y);
+			}
+			if (arr[0] < BASKET_HEIGHT)
+			{
+				return Point.Empty;
+			}
+			int yp = arr[1] - BASKET_HEIGHT / 2;
+			int left = Math.Max(5, pt.X - BASKET_WIDTH);
+			int rite = pt.X;
+			int xp = pt.X;
+			while (left <= rite)
+			{
+				int mid = (left + rite) / 2;
+				int[] color = b24.GetPixel(mid, yp);
+				if (RedBasketPixel(color))
+				{
+					rite = mid - 1;
+					xp = mid;
+				}
+				else
+				{
+					left = mid + 1;
+				}
+			}
+			return new Point(xp + BASKET_WIDTH / 2, yp);
         }
 
+		private static Point FindAnyBasketPoint(Bitmap24 b24)
+		{
+			int dx = Math.Max(1, BASKET_WIDTH - 2);
+			int dy = Math.Max(1, BASKET_HEIGHT - 2);
+			for (int y = 50; y < b24.Bitmap.Height; y += dy)
+			{
+				for (int x = 5; x < b24.Bitmap.Width; x += dx)
+				{
+					int[] arr = b24.GetPixel(x, y);
+					if (RedBasketPixel(arr))
+					{
+						return new Point(x, y);
+					}
+				}
+			}
+			return Point.Empty;
+		}
+
+		private static int[] GetBasketHeight(Bitmap24 b24, int x, int y)
+		{
+			int last = 0;
+			int cnt = 0;
+			for (int dy = -BASKET_HEIGHT; dy <= BASKET_HEIGHT; dy++)
+			{
+				int[] arr = b24.GetPixel(x, y + dy);
+				if (RedBasketPixel(arr))
+				{
+					cnt++;
+					last = y + dy;
+				}
+			}
+			return new int[] { cnt, last };
+		}
+
+		private static bool RedBasketPixel(int[] arr)
+		{
+			return arr[0] == 255 && arr[1] == 38 && arr[2] == 15;
+		}
     }
 }
