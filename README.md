@@ -25,8 +25,9 @@
   * `quit` exits the program.
 
 ## Acknowledgements
-1. [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
-  * Helping brainstorm ideas.
+* [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
+  * Assisting in brainstorm ideas.
   * Determining the MouseClickDrag speed to be 1 (no longer used).
   * Lots of help testing the project.
+  * Finding a plethora bugs that were exterminated mercilessly.
   * Moral support.

@@ -105,17 +105,29 @@ namespace Basketball
                         bmp.Dispose();
 
                         //Drag(here.X, here.Y, basket.X, basket.Y);
-                        WindowWrapper.BringToFront(handle);
-                        for (int i = 0; i < 8; i++)
-                        {
-                            double SHOT_TIME = 0.8;
-                            int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
-                            int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
-                            Point start = new Point(here.X, here.Y);
-                            Point target = new Point(basket.X + dx, basket.Y + dy);
-                            Cursor.Position = start;
-                            Shoot(start, target);
-                        }
+						if (!ball.IsEmpty && !rim.IsEmpty)
+						{
+							Console.WriteLine("absolute ball: {0}", ball);
+							Console.WriteLine("absolute basket: {1}", rim);
+							Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
+							Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
+							WindowWrapper.BringToFront(handle);
+							for (int i = 1; i <= 8; i++)
+							{
+								double SHOT_TIME = 0.8;
+								int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
+								int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
+								Point start = new Point(here.X, here.Y);
+								Point target = new Point(basket.X + dx, basket.Y + dy);
+								Cursor.Position = start;
+								Shoot(start, target);
+								Console.WriteLine("  -> Shot {0}: predicted loc = {1}, launch vector = <{2}, {3}>", i, target, dx, dy);
+							}
+						}
+						else
+						{
+							Console.WriteLine("Error: failed to locate basket or ball.");
+						}
 
                         WindowWrapper.BringToFront(self);
 
@@ -274,11 +286,11 @@ namespace Basketball
             Thread.Sleep(time);
             sw.Stop();
             Point p2 = FindBasket(handle);
-            Console.WriteLine(p1.X - p2.X);
-            Console.WriteLine(p1.Y - p2.Y);
-            Console.WriteLine(sw.ElapsedMilliseconds);
-            Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
-            Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
+			//Console.WriteLine(p1.X - p2.X);
+			//Console.WriteLine(p1.Y - p2.Y);
+			//Console.WriteLine(sw.ElapsedMilliseconds);
+			//Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
+			//Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
             return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
 
