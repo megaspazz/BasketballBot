@@ -81,7 +81,7 @@ namespace Basketball
                         stopwatch.Start();
                         IntPtr hWnd = WindowWrapper.GetHandleFromCursor();
                         Console.WriteLine("window name: " + WindowWrapper.GetText(hWnd));
-                        Bitmap img = WindowWrapper.TakeClientPicture(hWnd);
+                        Bitmap img = ScreenCapturer.SnapShot(hWnd);
                         Console.WriteLine("pixels captured = {0} x {1} = {2}", img.Width, img.Height, img.Width * img.Height);
                         Console.WriteLine("pixels per ms: {0} px/ms", (double)img.Width * img.Height / stopwatch.ElapsedMilliseconds);
                         Console.WriteLine("ss time: {0} [ms]", stopwatch.ElapsedMilliseconds);
@@ -96,6 +96,14 @@ namespace Basketball
                             curr = WindowWrapper.GetParentHandle(curr);
                         }
                         break;
+					case "HANDLE":
+						HANDLE = FindBluestacksHandle();
+						Console.WriteLine("Handle = {0}", HANDLE);
+						break;
+					case "WINDOW":
+						HANDLE = WindowWrapper.GetHandleFromCursor();
+						Console.WriteLine("Handle = {0}", HANDLE);
+						break;
                     case "CALC":
                         double[] velArr = CalculateVelocity(HANDLE, 500);
                         Console.WriteLine("velocity = <{0}, {1}>", velArr[0], velArr[1]);
@@ -292,7 +300,7 @@ namespace Basketball
 
         private static Point FindBasketball(IntPtr handle)
         {
-            Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
+            Bitmap bmp = ScreenCapturer.SnapShot(handle);
             Bitmap24 b24 = new Bitmap24(bmp);
             b24.Lock();
             Point rim = FindBasketball(b24);
@@ -304,7 +312,7 @@ namespace Basketball
         private static int FindAnyBasketballPointX(Bitmap24 b24)
         {
             int dx = Math.Max(1, BALL_WIDTH - 2);
-            for (int x = 200; x < 1080; x += dx)
+            for (int x = 402; x <= 877; x += dx)
             {
                 int[] arr = b24.GetPixel(x, BALL_Y);
                 if (!WhitePixel(arr))
@@ -331,7 +339,7 @@ namespace Basketball
 
         private static Point FindBasket(IntPtr handle, out Bitmap24 b24)
         {
-            Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
+            Bitmap bmp = ScreenCapturer.SnapShot(handle);
             b24 = new Bitmap24(bmp);
             b24.Lock();
             Point rim = FindBasket(b24);
@@ -473,9 +481,9 @@ namespace Basketball
         {
             int dx = Math.Max(1, BASKET_WIDTH - 4);
             int dy = Math.Max(1, BASKET_HEIGHT - 2);
-            for (int y = 50; y < b24.Bitmap.Height; y += dy)
+            for (int y = 230; y <= 372; y += dy)
             {
-                for (int x = 5; x < b24.Bitmap.Width; x += dx)
+                for (int x = 402; x <= 877; x += dx)
                 {
                     int[] arr = b24.GetPixel(x, y);
                     if (RedBasketPixel(arr))
@@ -691,7 +699,7 @@ namespace Basketball
             //double[] v = TransformVelocity(vel);
             Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
             tmr.Start();
-            Bitmap bmp = WindowWrapper.TakeClientPicture(HANDLE);
+            Bitmap bmp = ScreenCapturer.SnapShot(HANDLE);
             Bitmap24 b24 = new Bitmap24(bmp);
             b24.Lock();
             Point ball = FindBasketball(b24);

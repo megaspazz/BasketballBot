@@ -16,13 +16,24 @@
 3. Install Messenger on Bluestacks 2.
 
 ## Running the bot (subject to change!)
-1. Open Visual Studio as Administrator.
+1. Open Visual Studio.
 2. Build the solution.  It might download some Nuget packages.
-3. Make sure there is only one Bluestacks window already open when you run the program.
+3. Make sure there is only one Bluestacks window with Messenger already open when you run the program.
   * NOTE: Make sure the Bluestacks sidebar window that sometimes pops up is closed!
-3. In the console that comes up, you can type a series of commands, notably:
-  * `test` runs the bot.  Make sure that the basket will not change direction during the shot, i.e. make sure that it's not too close to the edges.  Note that it takes around 200 ms to take a shot.
-  * `quit` exits the program.
+3. In the console that comes up, you can type commands, notably:
+  * Game commands:
+    * `handle` attempts to acquire a new handle for the game window.  It should get one automatically when you run the program, but if you restarted Bluestacks, you can use this command.  A non-zero handle means that you probably acquired the correct handle.  Like before, make sure that there's only one Bluestacks window with Messenger already open when running this command.
+    * `window` sets the handle to the window handle that your cursor is currently on when you enter this command.  You can use it if you can't automatically acquire the correct handle by mousing over the game in Bluestacks and entering this command.
+    * `quit` exits the program.
+  * Level commands:
+    * `setlevel ###` sets the internal level counter to the number you specify.  Levels are important because they determine the parameters of the game that allow the bot to predict the position of the basket, such as the velocity of the basket and the boundaries of movement.
+    * `reset` sets the level counter to zero.
+    * `derank` decrements the level counter by one.
+    * `uprank` increases the level counter by one.
+  * Shooting commands:
+    * `test` runs a very primitive version of the bot.  It might miss, especially for longer shots.
+    * `auto` takes a well-aimed shot that only fires when the basket is in a good position.  This is almost guaranteed to make the shot.
+    * `freelo ###` automatically takes the number of shots you specified in the command.  Leaving it blank will let it run forever.  You can terminate this command at any time by pressing a key in the console while this command is running.  Make sure the console has the focus; the console should have focus most of the time, except when it's taking the shot.
 
 ## Acknowledgements
 * [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
