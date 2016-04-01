@@ -716,7 +716,7 @@ namespace Basketball
                 }
 
                 Point rim = Point.Empty;
-                while (!rim.IsEmpty)
+                while (rim.IsEmpty)
                 {
                     tmr.Restart();
                     rim = FindBasket(HANDLE);
