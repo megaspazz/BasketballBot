@@ -126,12 +126,25 @@ namespace Basketball
                         AutoAim();
                         break;
                     case "FREELO":
-                        int amt = (input.Length >= 2 && int.TryParse(input[1], out amt)) ? amt : int.MaxValue;
-                        for (int i = 0; i < amt; i++)
+                        bool[] stop = new bool[1];
+                        Task.Factory.StartNew(() =>
                         {
-                            AutoAim();
-                            Thread.Sleep(2500);
-                        }
+                            int amt = (input.Length >= 2 && int.TryParse(input[1], out amt)) ? amt : int.MaxValue;
+                            for (int i = 0; i < amt && !stop[0]; i++)
+                            {
+                                AutoAim(stop);
+                                Point ball;
+                                do
+                                {
+                                    Thread.Sleep(100);
+                                    ball = FindBasketball(HANDLE);
+
+                                } while (ball.IsEmpty);
+                                Thread.Sleep(1000);
+                            }
+                        });
+                        Console.ReadKey();
+                        stop[0] = true;
                         break;
                     case "RESET":
                         LEVEL = 0;
@@ -255,6 +268,14 @@ namespace Basketball
                 {
                     left = mid + 1;
                 }
+            }
+            int half = BALL_WIDTH / 2;
+            int xc = x + half;
+            int leftPos = xc - half + 2;
+            int ritePos = xc + half - 2;
+            if (leftPos < 200 || WhitePixel(b24.GetPixel(leftPos, BALL_Y)) || ritePos > 1080 || WhitePixel(b24.GetPixel(ritePos, BALL_Y)))
+            {
+                return Point.Empty;
             }
             return new Point(x + BALL_WIDTH / 2, BALL_Y);
         }
@@ -705,6 +726,11 @@ namespace Basketball
 
         private static void AutoAim()
         {
+            AutoAim(new bool[1]);
+        }
+
+        private static void AutoAim(bool[] stop)
+        {
             IntPtr self = WindowWrapper.GetForegroundWindow();
             Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
             Rectangle levelBounds = GetBoundsFor(LEVEL);
@@ -712,19 +738,19 @@ namespace Basketball
             Stopwatch tmr = new Stopwatch();
 
             bool fired = false;
-            while (!fired)
+            while (!fired && !stop[0])
             {
                 int[] sgn = GetVelocitySign(HANDLE, 80);
                 double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
 
                 Point ball = Point.Empty;
-                while (ball.IsEmpty)
+                while (ball.IsEmpty && !stop[0])
                 {
                     ball = FindBasketball(HANDLE);
                 }
 
                 Point rim = Point.Empty;
-                while (rim.IsEmpty)
+                while (rim.IsEmpty && !stop[0])
                 {
                     tmr.Restart();
                     rim = FindBasket(HANDLE);
@@ -732,13 +758,13 @@ namespace Basketball
 
                 WindowWrapper.BringToFront(HANDLE);
 
-                for (int i = 1; i <= 20; i++)
+                for (int i = 1; i <= 20 && !stop[0]; i++)
                 {
                     double SHOT_TIME = 0.75;
                     int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
                     int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
                     Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
-                    if (TakeShot(LEVEL, ball, pred, v))
+                    if (TakeShot(LEVEL, ball, pred, v) && !stop[0])
                     {
                         fired = true;
                         Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
