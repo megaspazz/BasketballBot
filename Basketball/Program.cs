@@ -816,17 +816,16 @@ namespace Basketball
                 if (shots > 0)
                 {
                     WindowWrapper.BringToFront(self);
-                }
-                if (shots > 3)
-                {
-                    LEVEL++;
-                    Console.WriteLine("Advanced to level {0}", LEVEL);
-                    break;
-                }
-                else
-                {
-                    Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
-                    break;
+                    if (shots < 3)
+                    {
+                        Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
+                    }
+                    else
+                    {
+                        LEVEL++;
+                        Console.WriteLine("Advanced to level {0}", LEVEL);
+                        break;
+                    }
                 }
             }
         }
