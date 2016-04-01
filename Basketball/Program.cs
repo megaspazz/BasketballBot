@@ -780,8 +780,7 @@ namespace Basketball
             Rectangle levelBounds = GetBoundsFor(LEVEL);
             Stopwatch tmr = new Stopwatch();
 
-            bool fired = false;
-            while (!fired && !stop[0])
+            while (!stop[0])
             {
                 Bitmap24 b24;
                 double[] vel = CalculateVelocity(HANDLE, 100, out b24);
@@ -794,8 +793,7 @@ namespace Basketball
                     continue;
                 }
 
-                WindowWrapper.BringToFront(HANDLE);
-
+                int shots = 0;
                 for (int i = 1; i <= 20 && !stop[0]; i++)
                 {
                     double SHOT_TIME = 0.75;
@@ -804,20 +802,32 @@ namespace Basketball
                     Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
                     if (TakeShot(LEVEL, ball, pred, v) && !stop[0])
                     {
-                        fired = true;
-                        Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
-                        Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                        Cursor.Position = start;
-                        Point shot = Shoot(start, target);
-                        Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                        if (shots == 0)
+                        {
+                            WindowWrapper.BringToFront(HANDLE);
+                            Console.WriteLine("  -> Shot {0}: pred = {1}, give focus", i, pred);
+                        }
+                        else
+                        {
+                            Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
+                            Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                            Cursor.Position = start;
+                            Point shot = Shoot(start, target);
+                            Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                        }
+                        shots++;
                     }
                 }
 
-                if (fired)
+                if (shots > 0)
+                {
+                    WindowWrapper.BringToFront(self);
+                }
+                if (shots > 4)
                 {
                     LEVEL++;
                     Console.WriteLine("Advanced to level {0}", LEVEL);
-                    WindowWrapper.BringToFront(self);
+                    break;
                 }
             }
         }
