@@ -127,6 +127,7 @@ namespace Basketball
                         break;
                     case "FREELO":
                         bool[] stop = new bool[1];
+                        bool finished = false;
                         Task.Factory.StartNew(() =>
                         {
                             int amt = (input.Length >= 2 && int.TryParse(input[1], out amt)) ? amt : int.MaxValue;
@@ -142,9 +143,18 @@ namespace Basketball
                                 } while (ball.IsEmpty);
                                 Thread.Sleep(1000);
                             }
+                            if (!stop[0])
+                            {
+                                Console.WriteLine("Successfully acquired freelo.  Press any key to continue.");
+                                stop[0] = true;
+                            }
                         });
                         Console.ReadKey();
-                        stop[0] = true;
+                        if (!stop[0])
+                        {
+                            Console.WriteLine("The operation was terminated by the user.");
+                            stop[0] = true;
+                        }
                         break;
                     case "RESET":
                         LEVEL = 0;
@@ -312,16 +322,32 @@ namespace Basketball
 
         private static Point FindBasket(IntPtr handle)
         {
+            Bitmap24 b24;
+            Point rim = FindBasket(handle, out b24);
+            b24.Unlock();
+            b24.Bitmap.Dispose();
+            return rim;
+        }
+
+        private static Point FindBasket(IntPtr handle, out Bitmap24 b24)
+        {
             Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
-            Bitmap24 b24 = new Bitmap24(bmp);
+            b24 = new Bitmap24(bmp);
             b24.Lock();
             Point rim = FindBasket(b24);
-            b24.Unlock();
-            bmp.Dispose();
             return rim;
         }
 
         private static double[] CalculateVelocity(IntPtr handle, int time)
+        {
+            Bitmap24 b24;
+            double[] v = CalculateVelocity(handle, time, out b24);
+            b24.Unlock();
+            b24.Bitmap.Dispose();
+            return v;
+        }
+
+        private static double[] CalculateVelocity(IntPtr handle, int time, out Bitmap24 b24)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -332,12 +358,7 @@ namespace Basketball
                 Thread.Sleep(rem);
             }
             sw.Stop();
-            Point p2 = FindBasket(handle);
-            //Console.WriteLine(p1.X - p2.X);
-            //Console.WriteLine(p1.Y - p2.Y);
-            //Console.WriteLine(sw.ElapsedMilliseconds);
-            //Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
-            //Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
+            Point p2 = FindBasket(handle, out b24);
             return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
 
@@ -601,6 +622,21 @@ namespace Basketball
             }
         }
 
+        private static double[] ValidateVelocityFor(int level, double[] v)
+        {
+            double[] vel = GetVelocitiesFor(level);
+            double vx = Math.Abs(v[0]);
+            double vy = Math.Abs(v[1]);
+            if (Math.Abs(vx - vel[0]) < 20 && Math.Abs(vy - vel[1]) < 20)
+            {
+                return new double[] { Math.Sign(v[0]) * vel[0], Math.Sign(v[1]) * vel[1] };
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         private static bool TakeShot(int level, Point ball, Point pred, double[] v)
         {
             if (level < 10)
@@ -734,26 +770,20 @@ namespace Basketball
             IntPtr self = WindowWrapper.GetForegroundWindow();
             Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
             Rectangle levelBounds = GetBoundsFor(LEVEL);
-            double[] vel = GetVelocitiesFor(LEVEL);
             Stopwatch tmr = new Stopwatch();
 
             bool fired = false;
             while (!fired && !stop[0])
             {
-                int[] sgn = GetVelocitySign(HANDLE, 80);
-                double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
-
-                Point ball = Point.Empty;
-                while (ball.IsEmpty && !stop[0])
+                Bitmap24 b24;
+                double[] vel = CalculateVelocity(HANDLE, 100, out b24);
+                tmr.Restart();
+                Point ball = FindBasketball(b24);
+                Point rim = FindBasket(b24);
+                double[] v = ValidateVelocityFor(LEVEL, vel);
+                if (ball.IsEmpty || rim.IsEmpty || v == null)
                 {
-                    ball = FindBasketball(HANDLE);
-                }
-
-                Point rim = Point.Empty;
-                while (rim.IsEmpty && !stop[0])
-                {
-                    tmr.Restart();
-                    rim = FindBasket(HANDLE);
+                    continue;
                 }
 
                 WindowWrapper.BringToFront(HANDLE);
