@@ -85,11 +85,16 @@ namespace Basketball
                         }
                         break;
                     case "CALC":
-                        Console.WriteLine(CalculateVelocity(handle, 500));
+                        double[] velArr = CalculateVelocity(handle, 500);
+                        Console.WriteLine("velocity = <{0}, {1}>", velArr[0], velArr[1]);
                         break;
 					case "BOUNDS":
 						Rectangle bounds = EstimateBasketBorder(handle, 16000);
 						Console.WriteLine(bounds);
+                        Console.WriteLine("left = " + bounds.Left);
+                        Console.WriteLine("rite = " + bounds.Right);
+                        Console.WriteLine("top  = " + bounds.Top);
+                        Console.WriteLine("bot  = " + bounds.Bottom);
 						break;
 					case "BOUNCE":
 						Rectangle fakeBounds = new Rectangle(0, 0, 17, 10);
@@ -137,8 +142,8 @@ namespace Basketball
 								Point start = new Point(here.X, here.Y);
 								Point target = new Point(basket.X + dx, basket.Y + dy);
 								Cursor.Position = start;
-								Shoot(start, target);
-								Console.WriteLine("  -> Shot {0}: predicted loc = {1}, launch vector = <{2}, {3}>", i, target, dx, dy);
+								Point shot = Shoot(start, target);
+								Console.WriteLine("  -> Shot {0}: predicted loc = {1}, vector = <{2}, {3}>", i, target, shot.X, shot.Y);
 							}
 						}
 						else
@@ -182,7 +187,7 @@ namespace Basketball
             return AutoHotKey.RunAHK(tempFile);
         }
 
-        private static void Shoot(Point ball, Point hoop)
+        private static Point Shoot(Point ball, Point hoop)
         {
             double dx = (hoop.X - ball.X) * 0.7;
             double dy = hoop.Y - ball.Y;
@@ -200,6 +205,8 @@ namespace Basketball
             Thread.Sleep(5);
             sim.Mouse.LeftButtonUp();
             Thread.Sleep(5);
+
+            return new Point(x, y);
 
             //string file = string.Format("{0}_{1}.ahk", x, y);
             //string path = Path.Combine(PRECOMP_DIR, file);
@@ -328,11 +335,11 @@ namespace Basketball
 				top = Math.Min(top, pt.Y);
 				bot = Math.Max(bot, pt.Y);
 			}
-			if (left > rite || bot > top)
+			if (left > rite || top > bot)
 			{
 				return Rectangle.Empty;
 			}
-			return new Rectangle(left, top, rite - left + 1, bot - top + 1);
+			return new Rectangle(left, top, rite - left, bot - top);
 		}
 
         private static readonly double[] VELOCITIES_X = { 0, 85, 170 };
@@ -429,12 +436,12 @@ namespace Basketball
 		{
 			int dx = (int)(v[0] * t);
 			int dy = (int)(v[1] * t);
-			if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0)
+			if (bounds.IsEmpty)
 			{
 				return new Point(start.X + dx, start.Y + dy);
 			}
-			dx %= (2 * bounds.Width);
-			dy %= (2 * bounds.Height);
+			dx %= Math.Max(1, 2 * bounds.Width);
+			dy %= Math.Max(1, 2 * bounds.Height);
 			int x = (int)(start.X + dx);
 			int y = (int)(start.Y + dy);
 			for (int i = 0; i < 2; i++)
@@ -443,17 +450,17 @@ namespace Basketball
 				{
 					x = Reflect(x, bounds.Left);
 				}
-				if (x > bounds.Right)
+				if (x >= bounds.Right)
 				{
-					x = Reflect(x, bounds.Right);
+					x = Reflect(x, bounds.Right - 1);
 				}
 				if (y < bounds.Top)
 				{
 					y = Reflect(y, bounds.Top);
 				}
-				if (y > bounds.Bottom)
+				if (y >= bounds.Bottom)
 				{
-					y = Reflect(y, bounds.Bottom);
+					y = Reflect(y, bounds.Bottom - 1);
 				}
 			}
 			return new Point(x, y);
