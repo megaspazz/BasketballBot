@@ -26,11 +26,12 @@ namespace Basketball
             int level = 0;
 			while (true)
 			{
-				Console.Write("Input command: ");
-				string raw = Console.ReadLine();
+				string raw;
                 string[] input;
                 do
                 {
+                    Console.Write("Input command: ");
+                    raw = Console.ReadLine();
                     input = raw.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 } while (input.Length == 0);
 				switch (input[0].ToUpper())
@@ -142,7 +143,7 @@ namespace Basketball
                         if (!ball.IsEmpty && !rim.IsEmpty)
                         {
                             Rectangle levelBounds = GetBoundsFor(level);
-                            int[] sgn = GetVelocitySign(handle);
+                            int[] sgn = GetVelocitySign(handle, 100);
                             double[] vel = GetVelocitiesFor(level);
                             double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
                             Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
