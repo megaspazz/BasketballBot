@@ -19,7 +19,6 @@ namespace Basketball
 {
     class Program
     {
-        private static readonly string PRECOMP_DIR = @"Precomp";
         private static int LEVEL = 0;
         private static IntPtr HANDLE;
 
@@ -79,7 +78,12 @@ namespace Basketball
                         Console.WriteLine("signs = <{0}, {1}>", sgnArr[0], sgnArr[1]);
                         break;
                     case "BOUNDS":
-                        Rectangle bounds = EstimateBasketBorder(HANDLE, 16000);
+                        int boundsTime;
+                        if (input.Length < 2 || !int.TryParse(input[1], out boundsTime))
+                        {
+                            boundsTime = 16000;
+                        }
+                        Rectangle bounds = EstimateBasketBorder(HANDLE, boundsTime);
                         Console.WriteLine(bounds);
                         Console.WriteLine("left = " + bounds.Left);
                         Console.WriteLine("rite = " + bounds.Right);
