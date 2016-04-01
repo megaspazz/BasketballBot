@@ -81,7 +81,7 @@ namespace Basketball
                         stopwatch.Start();
                         IntPtr hWnd = WindowWrapper.GetHandleFromCursor();
                         Console.WriteLine("window name: " + WindowWrapper.GetText(hWnd));
-                        Bitmap img = ScreenCapturer.SnapShot(hWnd);
+                        Bitmap img = WindowWrapper.TakeClientPicture(hWnd);
                         Console.WriteLine("pixels captured = {0} x {1} = {2}", img.Width, img.Height, img.Width * img.Height);
                         Console.WriteLine("pixels per ms: {0} px/ms", (double)img.Width * img.Height / stopwatch.ElapsedMilliseconds);
                         Console.WriteLine("ss time: {0} [ms]", stopwatch.ElapsedMilliseconds);
@@ -300,7 +300,7 @@ namespace Basketball
 
         private static Point FindBasketball(IntPtr handle)
         {
-            Bitmap bmp = ScreenCapturer.SnapShot(handle);
+            Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
             Bitmap24 b24 = new Bitmap24(bmp);
             b24.Lock();
             Point rim = FindBasketball(b24);
@@ -339,7 +339,7 @@ namespace Basketball
 
         private static Point FindBasket(IntPtr handle, out Bitmap24 b24)
         {
-            Bitmap bmp = ScreenCapturer.SnapShot(handle);
+            Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
             b24 = new Bitmap24(bmp);
             b24.Lock();
             Point rim = FindBasket(b24);
@@ -699,7 +699,7 @@ namespace Basketball
             //double[] v = TransformVelocity(vel);
             Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
             tmr.Start();
-            Bitmap bmp = ScreenCapturer.SnapShot(HANDLE);
+            Bitmap bmp = WindowWrapper.TakeClientPicture(HANDLE);
             Bitmap24 b24 = new Bitmap24(bmp);
             b24.Lock();
             Point ball = FindBasketball(b24);
