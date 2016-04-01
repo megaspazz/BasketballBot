@@ -23,12 +23,17 @@ namespace Basketball
 		{
 			AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
             IntPtr handle = FindBluestacksHandle();
+            int level = 0;
 			while (true)
 			{
 				Console.Write("Input command: ");
 				string raw = Console.ReadLine();
-				string input = raw.ToUpper();
-				switch (input)
+                string[] input;
+                do
+                {
+                    input = raw.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                } while (input.Length == 0);
+				switch (input[0].ToUpper())
 				{
                     case "GEN":
                         if (!Directory.Exists(PRECOMP_DIR))
@@ -88,7 +93,11 @@ namespace Basketball
                         double[] velArr = CalculateVelocity(handle, 500);
                         Console.WriteLine("velocity = <{0}, {1}>", velArr[0], velArr[1]);
                         break;
-					case "BOUNDS":
+                    case "SIGN":
+                        int[] sgnArr = GetVelocitySign(handle, 0);
+                        Console.WriteLine("signs = <{0}, {1}>", sgnArr[0], sgnArr[1]);
+                        break;
+                    case "BOUNDS":
 						Rectangle bounds = EstimateBasketBorder(handle, 16000);
 						Console.WriteLine(bounds);
                         Console.WriteLine("left = " + bounds.Left);
@@ -112,8 +121,8 @@ namespace Basketball
                         IntPtr self = WindowWrapper.GetForegroundWindow();
 
                         Stopwatch tmr = new Stopwatch();
-                        double[] vel = CalculateVelocity(handle, 160);
-                        double[] v = TransformVelocity(vel);
+                        //double[] vel = CalculateVelocity(handle, 160);
+                        //double[] v = TransformVelocity(vel);
                         Rectangle rect = WindowWrapper.GetClientArea(handle);
                         tmr.Start();
                         Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
@@ -127,24 +136,40 @@ namespace Basketball
                         b24.Unlock();
                         bmp.Dispose();
 
+                        Console.WriteLine("relative rim: {0}", rim);
                         Console.WriteLine("absolute ball: {0}", ball);
                         Console.WriteLine("absolute basket: {0}", basket);
                         if (!ball.IsEmpty && !rim.IsEmpty)
-						{
-							Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
-							Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
-							WindowWrapper.BringToFront(handle);
+                        {
+                            Rectangle levelBounds = GetBoundsFor(level);
+                            int[] sgn = GetVelocitySign(handle);
+                            double[] vel = GetVelocitiesFor(level);
+                            double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
+                            Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
+                            Console.WriteLine("L = {0}, R = {1}, T = {2}, B = {3}", levelBounds.Left, levelBounds.Right, levelBounds.Top, levelBounds.Bottom);
+                            //Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
+                            //Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
+                            WindowWrapper.BringToFront(handle);
 							for (int i = 1; i <= 8; i++)
-							{
-								double SHOT_TIME = 0.8;
+                            {
+                                double SHOT_TIME = 0.75;
 								int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
 								int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
 								Point start = new Point(here.X, here.Y);
-								Point target = new Point(basket.X + dx, basket.Y + dy);
-								Cursor.Position = start;
+                                Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
+                                Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                                //Point target = new Point(basket.X + dx, basket.Y + dy);
+                                Cursor.Position = start;
 								Point shot = Shoot(start, target);
-								Console.WriteLine("  -> Shot {0}: predicted loc = {1}, vector = <{2}, {3}>", i, target, shot.X, shot.Y);
+								Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                                //Rectangle upRect = new Rectangle(levelBounds.Location, new Size(levelBounds.Width + 1, levelBounds.Height + 1));
+                                //if (!upRect.Contains(pred))
+                                //{
+                                //    Console.WriteLine("      VIOLATION: shot out of defined bounds!");
+                                //}
 							}
+                            level++;
+                            Console.WriteLine("Advanced to level {0}", level);
 						}
 						else
 						{
@@ -169,7 +194,30 @@ namespace Basketball
                         //Cursor.Position = new Point(2257, 535);
                         //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
                         break;
-					case "QUIT":
+                    case "RESET":
+                        level = 0;
+                        Console.WriteLine("Reset to level {0}", level);
+                        break;
+                    case "DERANK":
+                        level--;
+                        Console.WriteLine("Back to level {0}", level);
+                        break;
+                    case "UPRANK":
+                        level++;
+                        Console.WriteLine("Upped to level {0}", level);
+                        break;
+                    case "SETLEVEL":
+                        if (input.Length >= 2)
+                        {
+                            int.TryParse(input[1], out level);
+                            Console.WriteLine("Set to level {0}", level);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Incorrect number of arguments.");
+                        }
+                        break;
+                    case "QUIT":
 						Console.WriteLine("Press any key to exit.");
 						Console.ReadKey();
 						return;
@@ -189,7 +237,7 @@ namespace Basketball
 
         private static Point Shoot(Point ball, Point hoop)
         {
-            double dx = (hoop.X - ball.X) * 0.7;
+            double dx = (hoop.X - ball.X) * 0.75;
             double dy = hoop.Y - ball.Y;
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)(dx / r * 72);
@@ -322,6 +370,21 @@ namespace Basketball
             return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
 
+        private static int[] GetVelocitySign(IntPtr handle, int time = 0)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            Point p1 = FindBasket(handle);
+            int rem = (int)(time - sw.ElapsedMilliseconds);
+            if (rem > 0)
+            {
+                Thread.Sleep(rem);
+            }
+            sw.Stop();
+            Point p2 = FindBasket(handle);
+            return new int[] { Math.Sign(p2.X - p1.X), Math.Sign(p2.Y - p1.Y) };
+        }
+
 		private static Rectangle EstimateBasketBorder(IntPtr handle, int time)
 		{
 			int left = int.MaxValue, rite = 0, top = int.MaxValue, bot = 0;
@@ -449,18 +512,18 @@ namespace Basketball
 				if (x < bounds.Left)
 				{
 					x = Reflect(x, bounds.Left);
-				}
-				if (x >= bounds.Right)
+                }
+				if (x > bounds.Right)
 				{
-					x = Reflect(x, bounds.Right - 1);
+					x = Reflect(x, bounds.Right);
 				}
 				if (y < bounds.Top)
 				{
 					y = Reflect(y, bounds.Top);
 				}
-				if (y >= bounds.Bottom)
+				if (y > bounds.Bottom)
 				{
-					y = Reflect(y, bounds.Bottom - 1);
+					y = Reflect(y, bounds.Bottom);
 				}
 			}
 			return new Point(x, y);
@@ -517,6 +580,54 @@ namespace Basketball
                 }
             }
             return IntPtr.Zero;
+        }
+
+        private static Rectangle GetBoundsFor(int level)
+        {
+            if (level < 10)
+            {
+                return new Rectangle(640, 235, 0, 0);
+            }
+            else if (level < 20)
+            {
+                return new Rectangle(477, 235, 325, 0);
+            }
+            else if (level < 30)
+            {
+                return new Rectangle(477, 235, 325, 66);
+            }
+            else if (level < 40)
+            {
+                return new Rectangle(477, 235, 325, 66);
+            }
+            else
+            {
+                return new Rectangle(477, 235, 325, 132);
+            }
+        }
+
+        private static double[] GetVelocitiesFor(int level)
+        {
+            if (level < 10)
+            {
+                return new double[] { 0, 0 };
+            }
+            else if (level < 20)
+            {
+                return new double[] { 88, 0 };
+            }
+            else if (level < 30)
+            {
+                return new double[] { 175, 0 };
+            }
+            else if (level < 40)
+            {
+                return new double[] { 175, 43 };
+            }
+            else
+            {
+                return new double[] { 175, 87 };
+            }
         }
     }
 }
