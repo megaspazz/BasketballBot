@@ -188,8 +188,6 @@ namespace Basketball
                         }
                         break;
                     case "QUIT":
-                        Console.WriteLine("Press any key to exit.");
-                        Console.ReadKey();
                         return;
                     default:
                         Console.WriteLine("Invalid input.");
@@ -805,16 +803,12 @@ namespace Basketball
                         if (shots == 0)
                         {
                             WindowWrapper.BringToFront(HANDLE);
-                            Console.WriteLine("  -> Shot {0}: pred = {1}, give focus", i, pred);
                         }
-                        else
-                        {
-                            Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
-                            Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                            Cursor.Position = start;
-                            Point shot = Shoot(start, target);
-                            Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
-                        }
+                        Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
+                        Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                        Cursor.Position = start;
+                        Point shot = Shoot(start, target);
+                        Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
                         shots++;
                     }
                 }
@@ -823,10 +817,15 @@ namespace Basketball
                 {
                     WindowWrapper.BringToFront(self);
                 }
-                if (shots > 4)
+                if (shots > 3)
                 {
                     LEVEL++;
                     Console.WriteLine("Advanced to level {0}", LEVEL);
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
                     break;
                 }
             }

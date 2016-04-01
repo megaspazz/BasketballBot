@@ -32,8 +32,14 @@
     * `uprank` increases the level counter by one.
   * Shooting commands:
     * `test` runs a very primitive version of the bot.  It might miss, especially for longer shots.
-    * `auto` takes a well-aimed shot that only fires when the basket is in a good position.  This is almost guaranteed to make the shot.  Make sure that the level is correctly set before using this command.
-    * `freelo ###` automatically takes the number of shots you specified in the command.  Leaving it blank will let it run forever.  Make sure that the level is correctly set before using this command.  You can terminate this command at any time by pressing a key in the console while this command is running.  Make sure the console has the focus; the console should have focus most of the time, except when it's taking the shot.
+      * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
+    * `auto` takes a well-aimed shot that only fires when the basket is in a good position.  This is almost guaranteed to make the shot.
+      * Make sure that the level is correctly set before using this command.
+      * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
+    * `freelo ###` automatically takes the number of shots you specified in the command.  Leaving it blank will let it run forever.
+      * Make sure that the level is correctly set before using this command.
+      * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
+      * You can terminate this command at any time by pressing a key in the console while this command is running.  Make sure the console has the focus; the console should have focus most of the time, except when it's taking the shot.
 
 ## Acknowledgements
 * [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
