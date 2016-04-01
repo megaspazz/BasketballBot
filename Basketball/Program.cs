@@ -38,58 +38,9 @@ namespace Basketball
                 } while (input.Length == 0);
                 switch (input[0].ToUpper())
                 {
-                    case "GEN":
-                        if (!Directory.Exists(PRECOMP_DIR))
-                        {
-                            Directory.CreateDirectory(PRECOMP_DIR);
-                        }
-                        for (int x = -72; x <= 72; x++)
-                        {
-                            for (int y = -72; y <= 72; y++)
-                            {
-                                string file = string.Format("{0}_{1}.ahk", x, y);
-                                string path = Path.Combine(PRECOMP_DIR, file);
-                                string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 1, R", x, y);
-                                File.WriteAllText(path, cmd);
-                                Console.WriteLine("Finished: {0}, {1}", x, y);
-                            }
-                        }
-                        break;
-                    case "BENCH":
-                        Bitmap bmpSS = new Bitmap("trial.png");
-                        using (Bitmap24 bmp24 = Bitmap24.FromImage(bmpSS))
-                        {
-                            bmp24.Lock();
-                            Stopwatch sw = new Stopwatch();
-                            sw.Start();
-                            Point ballPt = FindBasketball(bmp24);
-                            Point basketPt = FindBasket(bmp24);
-                            sw.Stop();
-                            Console.WriteLine("basket: {0}, ball: {1}, {2} [ms]", basketPt, ballPt, sw.ElapsedMilliseconds);
-                        }
-                        break;
                     case "CURSOR":
                         Point pt = Cursor.Position;
                         Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
-                        break;
-                    case "COMPARE":
-                        Bitmap bmpTest = WindowWrapper.TakeClientPicture(HANDLE);
-                        using (Bitmap24 bmpTest24 = Bitmap24.FromImage(bmpTest))
-                        {
-                            bmpTest24.Lock();
-                            for (int y = 0; y < bmpTest.Height; y++)
-                            {
-                                for (int x = 0; x < bmpTest.Width; x++)
-                                {
-                                    Color col = bmpTest.GetPixel(x, y);
-                                    int[] arr = bmpTest24.GetPixel(x, y);
-                                    if (col.R != arr[0] || col.G != arr[1] || col.B != arr[2])
-                                    {
-                                        Console.WriteLine("MISMATCH AT ({0}, {1})", x, y);
-                                    }
-                                }
-                            }
-                        }
                         break;
                     case "IMAGE":
                         Stopwatch stopwatch = new Stopwatch();
@@ -134,13 +85,6 @@ namespace Basketball
                         Console.WriteLine("rite = " + bounds.Right);
                         Console.WriteLine("top  = " + bounds.Top);
                         Console.WriteLine("bot  = " + bounds.Bottom);
-                        break;
-                    case "BOUNCE":
-                        Rectangle fakeBounds = new Rectangle(0, 0, 17, 10);
-                        Point ans = PredictPosition(new Point(3, 1), new double[] { 1, 1 }, 119, fakeBounds);
-                        Console.WriteLine(fakeBounds);
-                        Console.WriteLine(fakeBounds.Bottom);
-                        Console.WriteLine(ans);
                         break;
                     case "TEST":
                         DoSingleRun();
@@ -210,17 +154,14 @@ namespace Basketball
             }
         }
 
-        private static Point Shoot(Point ball, Point hoop)
+        private static Point GetShotVector(Point ball, Point hoop)
         {
             double dx = (hoop.X - ball.X) * 0.75;
             double dy = hoop.Y - ball.Y;
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)(dx / r * 72);
             int y = (int)(dy / r * 72);
-
-            //string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, 0, 0, {0}, {1}, 0, R", x, y);
-            //RunAHKString(cmd, TEMP_FILE);
-
+            
             InputSimulator sim = new InputSimulator();
             sim.Mouse.LeftButtonDown();
             Thread.Sleep(5);
@@ -230,17 +171,6 @@ namespace Basketball
             Thread.Sleep(5);
 
             return new Point(x, y);
-
-            //string file = string.Format("{0}_{1}.ahk", x, y);
-            //string path = Path.Combine(PRECOMP_DIR, file);
-            //AutoHotKey.RunAHK(path);
-
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-            //Thread.Sleep(15);
-            //Cursor.Position = new Point(ball.X + x, ball.Y + y);
-            //Console.WriteLine(Cursor.Position);
-            //Thread.Sleep(15);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
         }
 
         private static readonly int BALL_Y = 643;
@@ -682,16 +612,9 @@ namespace Basketball
 
         private static void DoSingleRun()
         {
-            //Thread.Sleep(100);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-
-            //AutoHotKey.RunAHK(@"AHK\Test");
-
             IntPtr self = WindowWrapper.GetForegroundWindow();
 
             Stopwatch tmr = new Stopwatch();
-            //double[] vel = CalculateVelocity(handle, 160);
-            //double[] v = TransformVelocity(vel);
             Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
             tmr.Start();
             Bitmap bmp = WindowWrapper.TakeClientPicture(HANDLE);
@@ -714,8 +637,6 @@ namespace Basketball
                     double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
                     Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
                     Console.WriteLine("L = {0}, R = {1}, T = {2}, B = {3}", levelBounds.Left, levelBounds.Right, levelBounds.Top, levelBounds.Bottom);
-                    //Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
-                    //Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
                     WindowWrapper.BringToFront(HANDLE);
                     for (int i = 1; i <= 8; i++)
                     {
@@ -725,15 +646,9 @@ namespace Basketball
                         Point start = new Point(here.X, here.Y);
                         Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
                         Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                        //Point target = new Point(basket.X + dx, basket.Y + dy);
                         Cursor.Position = start;
-                        Point shot = Shoot(start, target);
+                        Point shot = GetShotVector(start, target);
                         Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
-                        //Rectangle upRect = new Rectangle(levelBounds.Location, new Size(levelBounds.Width + 1, levelBounds.Height + 1));
-                        //if (!upRect.Contains(pred))
-                        //{
-                        //    Console.WriteLine("      VIOLATION: shot out of defined bounds!");
-                        //}
                     }
                     LEVEL++;
                     Console.WriteLine("Advanced to level {0}", LEVEL);
@@ -746,22 +661,6 @@ namespace Basketball
                 bmp.Dispose();
             }
             WindowWrapper.BringToFront(self);
-
-            //Cursor.Position = new Point(2171, 382);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-            //Thread.Sleep(500);
-            //Cursor.Position = new Point(2171, 382);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-
-            //Cursor.Position = new Point(2724, 540);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-            //Cursor.Position = new Point(2724, 539);
-            //Thread.Sleep(1000);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-            //Thread.Sleep(100);
-            //Cursor.Position = new Point(2257, 535);
-            //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
         }
 
         private static void AutoAim()
@@ -803,7 +702,7 @@ namespace Basketball
                             Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
                             Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
                             Cursor.Position = start;
-                            Point shot = Shoot(start, target);
+                            Point shot = GetShotVector(start, target);
                             Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
                             shots++;
                         }
