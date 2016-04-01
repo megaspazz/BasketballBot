@@ -22,8 +22,7 @@ namespace Basketball
 		static void Main(string[] args)
 		{
 			AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
-            AutoHotKey.RunAsAdmin = true;
-            IntPtr handle = WindowWrapper.GetHandleFromName("Bluestacks App Player");
+            IntPtr handle = FindBluestacksHandle();
 			while (true)
 			{
 				Console.Write("Input command: ");
@@ -77,6 +76,13 @@ namespace Basketball
 						stopwatch.Restart();
                         img.Save("test.bmp");
 						Console.WriteLine("save time: {0} [ms]", stopwatch.ElapsedMilliseconds);
+                        Console.WriteLine("Parent hierarchy:");
+                        IntPtr curr = hWnd;
+                        while (curr != IntPtr.Zero)
+                        {
+                            Console.WriteLine("{0}: {1}", curr, WindowWrapper.GetText(curr));
+                            curr = WindowWrapper.GetParentHandle(curr);
+                        }
                         break;
                     case "CALC":
                         Console.WriteLine(CalculateVelocity(handle, 500));
@@ -106,6 +112,7 @@ namespace Basketball
                         Rectangle rect = WindowWrapper.GetClientArea(handle);
                         tmr.Start();
                         Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
+                        bmp.Save("temp.bmp");
                         Bitmap24 b24 = new Bitmap24(bmp);
                         b24.Lock();
                         Point ball = FindBasketball(b24);
@@ -115,11 +122,10 @@ namespace Basketball
                         b24.Unlock();
                         bmp.Dispose();
 
-                        //Drag(here.X, here.Y, basket.X, basket.Y);
-						if (!ball.IsEmpty && !rim.IsEmpty)
+                        Console.WriteLine("absolute ball: {0}", ball);
+                        Console.WriteLine("absolute basket: {0}", basket);
+                        if (!ball.IsEmpty && !rim.IsEmpty)
 						{
-							Console.WriteLine("absolute ball: {0}", ball);
-							Console.WriteLine("absolute basket: {0}", basket);
 							Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
 							Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
 							WindowWrapper.BringToFront(handle);
@@ -478,5 +484,32 @@ namespace Basketball
 		{
 			return arr[0] == 255 && arr[1] == 38 && arr[2] == 15;
 		}
+
+        private static string[] HANDLE_HIERARCHY = { "Bluestacks App Player", "", "Messenger", "BlueStacks Android Plugin" };
+        private static IntPtr FindBluestacksHandle()
+        {
+            IntPtr parent = WindowWrapper.GetHandleFromName(HANDLE_HIERARCHY[0]);
+            Stack<IntPtr> stack = new Stack<IntPtr>();
+            Stack<int> depth = new Stack<int>();
+            stack.Push(parent);
+            depth.Push(0);
+            while (stack.Count > 0)
+            {
+                IntPtr curr = stack.Pop();
+                int d = depth.Pop();
+                string title = WindowWrapper.GetText(curr);
+                if (d == HANDLE_HIERARCHY.Length - 1)
+                {
+                    return curr;
+                }
+                IntPtr[] children = WindowWrapper.GetChildrenHandles(curr, HANDLE_HIERARCHY[d + 1]);
+                foreach (IntPtr hWnd in children)
+                {
+                    stack.Push(hWnd);
+                    depth.Push(d + 1);
+                }
+            }
+            return IntPtr.Zero;
+        }
     }
 }

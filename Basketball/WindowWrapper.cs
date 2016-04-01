@@ -340,6 +340,34 @@ namespace Basketball
             return DestroyWindow(handle);
         }
 
+        public static IntPtr GetParentHandle(IntPtr handle)
+        {
+            return GetParent(handle);
+        }
+
+        public static IntPtr[] GetChildrenHandles(IntPtr handle, string title = null)
+        {
+            List<IntPtr> lst = new List<IntPtr>();
+            IntPtr curr = IntPtr.Zero;
+            while (true)
+            {
+                curr = FindWindowEx(handle, curr, null, title);
+                if (curr != IntPtr.Zero)
+                {
+                    lst.Add(curr);
+                } else
+                {
+                    break;
+                }
+            }
+            return lst.ToArray();
+        }
+
+        public static IntPtr GetChildByName(IntPtr handle, string title)
+        {
+            return FindWindowEx(handle, IntPtr.Zero, null, title);
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
@@ -393,6 +421,12 @@ namespace Basketball
 
         [DllImport("user32.dll")]
         static extern bool DestroyWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
+        static extern IntPtr GetParent(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string windowTitle);
 
         [Flags]
         private enum SnapshotFlags : uint
