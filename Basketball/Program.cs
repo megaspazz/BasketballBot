@@ -125,6 +125,14 @@ namespace Basketball
                     case "AUTO":
                         AutoAim();
                         break;
+                    case "FREELO":
+                        int amt = (input.Length >= 2 && int.TryParse(input[1], out amt)) ? amt : int.MaxValue;
+                        for (int i = 0; i < amt; i++)
+                        {
+                            AutoAim();
+                            Thread.Sleep(2500);
+                        }
+                        break;
                     case "RESET":
                         LEVEL = 0;
                         Console.WriteLine("Reset to level {0}", LEVEL);
