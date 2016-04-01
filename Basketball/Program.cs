@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -8,10 +9,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 
-using AutoHotKeyNET;
+// my own DLLs
 using FastBitmap;
-using System.Diagnostics;
 
+// external DLLs
 using WindowsInput;
 
 namespace Basketball
@@ -22,14 +23,9 @@ namespace Basketball
         private static int LEVEL = 0;
         private static IntPtr HANDLE;
 
-        static Program()
-        {
-            HANDLE = FindBluestacksHandle();
-            AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
-        }
-
         static void Main(string[] args)
         {
+            HANDLE = FindBluestacksHandle();
             while (true)
             {
                 string raw;
@@ -214,13 +210,6 @@ namespace Basketball
             }
         }
 
-        private static string TEMP_FILE = @"Temp.ahk";
-        private static bool RunAHKString(string command, string tempFile)
-        {
-            File.WriteAllText(tempFile, command);
-            return AutoHotKey.RunAHK(tempFile);
-        }
-
         private static Point Shoot(Point ball, Point hoop)
         {
             double dx = (hoop.X - ball.X) * 0.75;
@@ -252,29 +241,6 @@ namespace Basketball
             //Console.WriteLine(Cursor.Position);
             //Thread.Sleep(15);
             //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
-        }
-
-        private static void Drag(int x1, int y1, int x2, int y2)
-        {
-            //string cmd = string.Format("CoordMode, Mouse, Screen\nMouseClickDrag, Left, {0}, {1}, {2}, {3}, 20", x1, y1, x2, y2);
-            //RunAHKString(cmd, TEMP_FILE);
-            int IVL = 100;
-            double dx = (double)(x2 - x1) / IVL;
-            double dy = (double)(y2 - y1) / IVL;
-            AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-            Thread.Sleep(500);
-            AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-            Thread.Sleep(500);
-            //for (int i = 0; i <= IVL; i++)
-            //{
-            //    int x = (int)(x1 + i * dx);
-            //    int y = (int)(y1 + i * dy);
-            //    Cursor.Position = new Point(x, y);
-            //    Thread.Sleep(5);
-            //}
-            RunAHKString(string.Format("CoordMode, Mouse, Screen\nMouseMove, {0}, {1}, 20", x2, y2), TEMP_FILE);
-            Thread.Sleep(500);
-            AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
         }
 
         private static readonly int BALL_Y = 643;
