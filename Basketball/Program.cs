@@ -76,6 +76,23 @@ namespace Basketball
                         Point pt = Cursor.Position;
                         Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
                         break;
+                    case "COMPARE":
+                        Bitmap bmpTest = WindowWrapper.TakeClientPicture(HANDLE);
+                        Bitmap24 bmpTest24 = new Bitmap24(bmpTest);
+                        bmpTest24.Lock();
+                        for (int y = 0; y < bmpTest.Height; y++)
+                        {
+                            for (int x = 0; x < bmpTest.Width; x++)
+                            {
+                                Color col = bmpTest.GetPixel(x, y);
+                                int[] arr = bmpTest24.GetPixel(x, y);
+                                if (col.R != arr[0] || col.G != arr[1] || col.B != arr[2])
+                                {
+                                    Console.WriteLine("MISMATCH AT ({0}, {1})", x, y);
+                                }
+                            }
+                        }
+                        break;
                     case "IMAGE":
                         Stopwatch stopwatch = new Stopwatch();
                         stopwatch.Start();
