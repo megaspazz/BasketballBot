@@ -16,17 +16,23 @@ using WindowsInput;
 
 namespace Basketball
 {
-	class Program
-	{
-        private static string PRECOMP_DIR = @"Precomp";
-		static void Main(string[] args)
-		{
-			AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
-            IntPtr handle = FindBluestacksHandle();
-            int level = 0;
-			while (true)
-			{
-				string raw;
+    class Program
+    {
+        private static readonly string PRECOMP_DIR = @"Precomp";
+        private static int LEVEL = 0;
+        private static IntPtr HANDLE;
+
+        static Program()
+        {
+            HANDLE = FindBluestacksHandle();
+            AutoHotKey.PathEXE = @"Exe\AutoHotkeyU64.exe";
+        }
+
+        static void Main(string[] args)
+        {
+            while (true)
+            {
+                string raw;
                 string[] input;
                 do
                 {
@@ -34,8 +40,8 @@ namespace Basketball
                     raw = Console.ReadLine();
                     input = raw.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 } while (input.Length == 0);
-				switch (input[0].ToUpper())
-				{
+                switch (input[0].ToUpper())
+                {
                     case "GEN":
                         if (!Directory.Exists(PRECOMP_DIR))
                         {
@@ -53,35 +59,35 @@ namespace Basketball
                             }
                         }
                         break;
-					case "BENCH":
-						Bitmap bmpSS = new Bitmap("trial.png");
-						Bitmap24 bmp24 = new Bitmap24(bmpSS);
-						bmp24.Lock();
-						Stopwatch sw = new Stopwatch();
-						sw.Start();
-						Point ballPt = FindBasketball(bmp24);
-						Point basketPt = FindBasket(bmp24);
-						sw.Stop();
-						bmp24.Unlock();
-						bmpSS.Dispose();
-						Console.WriteLine("basket: {0}, ball: {1}, {2} [ms]", basketPt, ballPt, sw.ElapsedMilliseconds);
-						break;
-					case "CURSOR":
-						Point pt = Cursor.Position;
-						Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
-						break;
-					case "IMAGE":
-						Stopwatch stopwatch = new Stopwatch();
-						stopwatch.Start();
+                    case "BENCH":
+                        Bitmap bmpSS = new Bitmap("trial.png");
+                        Bitmap24 bmp24 = new Bitmap24(bmpSS);
+                        bmp24.Lock();
+                        Stopwatch sw = new Stopwatch();
+                        sw.Start();
+                        Point ballPt = FindBasketball(bmp24);
+                        Point basketPt = FindBasket(bmp24);
+                        sw.Stop();
+                        bmp24.Unlock();
+                        bmpSS.Dispose();
+                        Console.WriteLine("basket: {0}, ball: {1}, {2} [ms]", basketPt, ballPt, sw.ElapsedMilliseconds);
+                        break;
+                    case "CURSOR":
+                        Point pt = Cursor.Position;
+                        Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
+                        break;
+                    case "IMAGE":
+                        Stopwatch stopwatch = new Stopwatch();
+                        stopwatch.Start();
                         IntPtr hWnd = WindowWrapper.GetHandleFromCursor();
-						Console.WriteLine("window name: " + WindowWrapper.GetText(hWnd));
+                        Console.WriteLine("window name: " + WindowWrapper.GetText(hWnd));
                         Bitmap img = WindowWrapper.TakeClientPicture(hWnd);
-						Console.WriteLine("pixels captured = {0} x {1} = {2}", img.Width, img.Height, img.Width * img.Height);
-						Console.WriteLine("pixels per ms: {0} px/ms", (double)img.Width * img.Height / stopwatch.ElapsedMilliseconds);
-						Console.WriteLine("ss time: {0} [ms]", stopwatch.ElapsedMilliseconds);
-						stopwatch.Restart();
+                        Console.WriteLine("pixels captured = {0} x {1} = {2}", img.Width, img.Height, img.Width * img.Height);
+                        Console.WriteLine("pixels per ms: {0} px/ms", (double)img.Width * img.Height / stopwatch.ElapsedMilliseconds);
+                        Console.WriteLine("ss time: {0} [ms]", stopwatch.ElapsedMilliseconds);
+                        stopwatch.Restart();
                         img.Save("test.bmp");
-						Console.WriteLine("save time: {0} [ms]", stopwatch.ElapsedMilliseconds);
+                        Console.WriteLine("save time: {0} [ms]", stopwatch.ElapsedMilliseconds);
                         Console.WriteLine("Parent hierarchy:");
                         IntPtr curr = hWnd;
                         while (curr != IntPtr.Zero)
@@ -91,127 +97,51 @@ namespace Basketball
                         }
                         break;
                     case "CALC":
-                        double[] velArr = CalculateVelocity(handle, 500);
+                        double[] velArr = CalculateVelocity(HANDLE, 500);
                         Console.WriteLine("velocity = <{0}, {1}>", velArr[0], velArr[1]);
                         break;
                     case "SIGN":
-                        int[] sgnArr = GetVelocitySign(handle, 0);
+                        int[] sgnArr = GetVelocitySign(HANDLE, 0);
                         Console.WriteLine("signs = <{0}, {1}>", sgnArr[0], sgnArr[1]);
                         break;
                     case "BOUNDS":
-						Rectangle bounds = EstimateBasketBorder(handle, 16000);
-						Console.WriteLine(bounds);
+                        Rectangle bounds = EstimateBasketBorder(HANDLE, 16000);
+                        Console.WriteLine(bounds);
                         Console.WriteLine("left = " + bounds.Left);
                         Console.WriteLine("rite = " + bounds.Right);
                         Console.WriteLine("top  = " + bounds.Top);
                         Console.WriteLine("bot  = " + bounds.Bottom);
-						break;
-					case "BOUNCE":
-						Rectangle fakeBounds = new Rectangle(0, 0, 17, 10);
-						Point ans = PredictPosition(new Point(3, 1), new double[] { 1, 1 }, 119, fakeBounds);
-						Console.WriteLine(fakeBounds);
-						Console.WriteLine(fakeBounds.Bottom);
-						Console.WriteLine(ans);
-						break;
-					case "TEST":
-                        //Thread.Sleep(100);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-
-                        //AutoHotKey.RunAHK(@"AHK\Test");
-
-                        IntPtr self = WindowWrapper.GetForegroundWindow();
-
-                        Stopwatch tmr = new Stopwatch();
-                        //double[] vel = CalculateVelocity(handle, 160);
-                        //double[] v = TransformVelocity(vel);
-                        Rectangle rect = WindowWrapper.GetClientArea(handle);
-                        tmr.Start();
-                        Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
-                        bmp.Save("temp.bmp");
-                        Bitmap24 b24 = new Bitmap24(bmp);
-                        b24.Lock();
-                        Point ball = FindBasketball(b24);
-                        Point rim = FindBasket(b24);
-                        Point here = new Point(ball.X + rect.X, ball.Y + rect.Y);
-                        Point basket = new Point(rim.X + rect.X, rim.Y + rect.Y);
-                        b24.Unlock();
-                        bmp.Dispose();
-
-                        Console.WriteLine("relative rim: {0}", rim);
-                        Console.WriteLine("absolute ball: {0}", ball);
-                        Console.WriteLine("absolute basket: {0}", basket);
-                        if (!ball.IsEmpty && !rim.IsEmpty)
-                        {
-                            Rectangle levelBounds = GetBoundsFor(level);
-                            int[] sgn = GetVelocitySign(handle, 100);
-                            double[] vel = GetVelocitiesFor(level);
-                            double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
-                            Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
-                            Console.WriteLine("L = {0}, R = {1}, T = {2}, B = {3}", levelBounds.Left, levelBounds.Right, levelBounds.Top, levelBounds.Bottom);
-                            //Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
-                            //Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
-                            WindowWrapper.BringToFront(handle);
-							for (int i = 1; i <= 8; i++)
-                            {
-                                double SHOT_TIME = 0.75;
-								int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
-								int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
-								Point start = new Point(here.X, here.Y);
-                                Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
-                                Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                                //Point target = new Point(basket.X + dx, basket.Y + dy);
-                                Cursor.Position = start;
-								Point shot = Shoot(start, target);
-								Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
-                                //Rectangle upRect = new Rectangle(levelBounds.Location, new Size(levelBounds.Width + 1, levelBounds.Height + 1));
-                                //if (!upRect.Contains(pred))
-                                //{
-                                //    Console.WriteLine("      VIOLATION: shot out of defined bounds!");
-                                //}
-							}
-                            level++;
-                            Console.WriteLine("Advanced to level {0}", level);
-						}
-						else
-						{
-							Console.WriteLine("Error: failed to locate basket or ball.");
-						}
-
-                        WindowWrapper.BringToFront(self);
-
-                        //Cursor.Position = new Point(2171, 382);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-                        //Thread.Sleep(500);
-                        //Cursor.Position = new Point(2171, 382);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-
-                        //Cursor.Position = new Point(2724, 540);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
-                        //Cursor.Position = new Point(2724, 539);
-                        //Thread.Sleep(1000);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
-                        //Thread.Sleep(100);
-                        //Cursor.Position = new Point(2257, 535);
-                        //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
+                        break;
+                    case "BOUNCE":
+                        Rectangle fakeBounds = new Rectangle(0, 0, 17, 10);
+                        Point ans = PredictPosition(new Point(3, 1), new double[] { 1, 1 }, 119, fakeBounds);
+                        Console.WriteLine(fakeBounds);
+                        Console.WriteLine(fakeBounds.Bottom);
+                        Console.WriteLine(ans);
+                        break;
+                    case "TEST":
+                        DoSingleRun();
+                        break;
+                    case "AUTO":
+                        AutoAim();
                         break;
                     case "RESET":
-                        level = 0;
-                        Console.WriteLine("Reset to level {0}", level);
+                        LEVEL = 0;
+                        Console.WriteLine("Reset to level {0}", LEVEL);
                         break;
                     case "DERANK":
-                        level--;
-                        Console.WriteLine("Back to level {0}", level);
+                        LEVEL--;
+                        Console.WriteLine("Back to level {0}", LEVEL);
                         break;
                     case "UPRANK":
-                        level++;
-                        Console.WriteLine("Upped to level {0}", level);
+                        LEVEL++;
+                        Console.WriteLine("Upped to level {0}", LEVEL);
                         break;
                     case "SETLEVEL":
                         if (input.Length >= 2)
                         {
-                            int.TryParse(input[1], out level);
-                            Console.WriteLine("Set to level {0}", level);
+                            int.TryParse(input[1], out LEVEL);
+                            Console.WriteLine("Set to level {0}", LEVEL);
                         }
                         else
                         {
@@ -219,15 +149,15 @@ namespace Basketball
                         }
                         break;
                     case "QUIT":
-						Console.WriteLine("Press any key to exit.");
-						Console.ReadKey();
-						return;
-					default:
-						Console.WriteLine("Invalid input.");
-						break;
-				}
-			}
-		}
+                        Console.WriteLine("Press any key to exit.");
+                        Console.ReadKey();
+                        return;
+                    default:
+                        Console.WriteLine("Invalid input.");
+                        break;
+                }
+            }
+        }
 
         private static string TEMP_FILE = @"Temp.ahk";
         private static bool RunAHKString(string command, string tempFile)
@@ -296,49 +226,60 @@ namespace Basketball
         private static readonly int BALL_WIDTH = 132;
         private static Point FindBasketball(Bitmap24 b24)
         {
-			int xp = FindAnyBasketballPointX(b24);
-			if (xp == 0)
-			{
-				return Point.Empty;
-			}
-			int left = Math.Max(200, xp - BALL_WIDTH);
-			int rite = xp;
-			int x = xp;
-			while (left <= rite)
-			{
-				int mid = (left + rite) / 2;
-				int[] arr = b24.GetPixel(mid, BALL_Y);
-				if (!WhitePixel(arr))
-				{
-					x = mid;
-					rite = mid - 1;
-				}
-				else
-				{
-					left = mid + 1;
-				}
-			}
-			return new Point(x + BALL_WIDTH / 2, BALL_Y);
+            int xp = FindAnyBasketballPointX(b24);
+            if (xp == 0)
+            {
+                return Point.Empty;
+            }
+            int left = Math.Max(200, xp - BALL_WIDTH);
+            int rite = xp;
+            int x = xp;
+            while (left <= rite)
+            {
+                int mid = (left + rite) / 2;
+                int[] arr = b24.GetPixel(mid, BALL_Y);
+                if (!WhitePixel(arr))
+                {
+                    x = mid;
+                    rite = mid - 1;
+                }
+                else
+                {
+                    left = mid + 1;
+                }
+            }
+            return new Point(x + BALL_WIDTH / 2, BALL_Y);
         }
 
-		private static int FindAnyBasketballPointX(Bitmap24 b24)
-		{
-			int dx = Math.Max(1, BALL_WIDTH - 2);
-			for (int x = 200; x < 1080; x += dx)
-			{
-				int[] arr = b24.GetPixel(x, BALL_Y);
-				if (!WhitePixel(arr))
-				{
-					return x;
-				}
-			}
-			return 0;
-		}
+        private static Point FindBasketball(IntPtr handle)
+        {
+            Bitmap bmp = WindowWrapper.TakeClientPicture(handle);
+            Bitmap24 b24 = new Bitmap24(bmp);
+            b24.Lock();
+            Point rim = FindBasketball(b24);
+            b24.Unlock();
+            bmp.Dispose();
+            return rim;
+        }
 
-		private static bool WhitePixel(int[] arr)
-		{
-			return (arr[0] == 255 && arr[1] == 255 && arr[2] == 255);
-		}
+        private static int FindAnyBasketballPointX(Bitmap24 b24)
+        {
+            int dx = Math.Max(1, BALL_WIDTH - 2);
+            for (int x = 200; x < 1080; x += dx)
+            {
+                int[] arr = b24.GetPixel(x, BALL_Y);
+                if (!WhitePixel(arr))
+                {
+                    return x;
+                }
+            }
+            return 0;
+        }
+
+        private static bool WhitePixel(int[] arr)
+        {
+            return (arr[0] == 255 && arr[1] == 255 && arr[2] == 255);
+        }
 
         private static Point FindBasket(IntPtr handle)
         {
@@ -356,18 +297,18 @@ namespace Basketball
             Stopwatch sw = new Stopwatch();
             sw.Start();
             Point p1 = FindBasket(handle);
-			int rem = (int)(time - sw.ElapsedMilliseconds);
-			if (rem > 0)
-			{
-				Thread.Sleep(rem);
-			}
+            int rem = (int)(time - sw.ElapsedMilliseconds);
+            if (rem > 0)
+            {
+                Thread.Sleep(rem);
+            }
             sw.Stop();
             Point p2 = FindBasket(handle);
-			//Console.WriteLine(p1.X - p2.X);
-			//Console.WriteLine(p1.Y - p2.Y);
-			//Console.WriteLine(sw.ElapsedMilliseconds);
-			//Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
-			//Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
+            //Console.WriteLine(p1.X - p2.X);
+            //Console.WriteLine(p1.Y - p2.Y);
+            //Console.WriteLine(sw.ElapsedMilliseconds);
+            //Console.WriteLine(1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds);
+            //Console.WriteLine(1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds);
             return new double[] { 1000.0 * (p2.X - p1.X) / sw.ElapsedMilliseconds, 1000.0 * (p2.Y - p1.Y) / sw.ElapsedMilliseconds };
         }
 
@@ -386,25 +327,25 @@ namespace Basketball
             return new int[] { Math.Sign(p2.X - p1.X), Math.Sign(p2.Y - p1.Y) };
         }
 
-		private static Rectangle EstimateBasketBorder(IntPtr handle, int time)
-		{
-			int left = int.MaxValue, rite = 0, top = int.MaxValue, bot = 0;
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			while (sw.ElapsedMilliseconds < time)
-			{
-				Point pt = FindBasket(handle);
-				left = Math.Min(left, pt.X);
-				rite = Math.Max(rite, pt.X);
-				top = Math.Min(top, pt.Y);
-				bot = Math.Max(bot, pt.Y);
-			}
-			if (left > rite || top > bot)
-			{
-				return Rectangle.Empty;
-			}
-			return new Rectangle(left, top, rite - left, bot - top);
-		}
+        private static Rectangle EstimateBasketBorder(IntPtr handle, int time)
+        {
+            int left = int.MaxValue, rite = 0, top = int.MaxValue, bot = 0;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            while (sw.ElapsedMilliseconds < time)
+            {
+                Point pt = FindBasket(handle);
+                left = Math.Min(left, pt.X);
+                rite = Math.Max(rite, pt.X);
+                top = Math.Min(top, pt.Y);
+                bot = Math.Max(bot, pt.Y);
+            }
+            if (left > rite || top > bot)
+            {
+                return Rectangle.Empty;
+            }
+            return new Rectangle(left, top, rite - left, bot - top);
+        }
 
         private static readonly double[] VELOCITIES_X = { 0, 85, 170 };
         private static readonly double[] VELOCITIES_Y = { 0 };
@@ -436,125 +377,125 @@ namespace Basketball
         private static readonly int BASKET_WIDTH = 112;
         private static readonly int BASKET_HEIGHT = 6;
         private static Point FindBasket(Bitmap24 b24)
-		{
-			Point pt = FindAnyBasketPoint(b24);
-			if (pt.IsEmpty)
-			{
-				return Point.Empty;
-			}
-			int[] arr = GetBasketHeight(b24, pt.X, pt.Y);
-			if (arr[0] < BASKET_HEIGHT)
-			{
-				pt.X -= 5;
-				arr = GetBasketHeight(b24, pt.X, pt.Y);
-			}
-			if (arr[0] < BASKET_HEIGHT)
-			{
-				pt.X += 10;
-				arr = GetBasketHeight(b24, pt.X, pt.Y);
-			}
-			if (arr[0] < BASKET_HEIGHT)
-			{
-				return Point.Empty;
-			}
-			int yp = arr[1] - BASKET_HEIGHT / 2;
-			int left = Math.Max(5, pt.X - BASKET_WIDTH);
-			int rite = pt.X;
-			int xp = pt.X;
-			while (left <= rite)
-			{
-				int mid = (left + rite) / 2;
-				int[] color = b24.GetPixel(mid, yp);
-				if (RedBasketPixel(color))
-				{
-					rite = mid - 1;
-					xp = mid;
-				}
-				else
-				{
-					left = mid + 1;
-				}
-			}
-			return new Point(xp + BASKET_WIDTH / 2, yp);
+        {
+            Point pt = FindAnyBasketPoint(b24);
+            if (pt.IsEmpty)
+            {
+                return Point.Empty;
+            }
+            int[] arr = GetBasketHeight(b24, pt.X, pt.Y);
+            if (arr[0] < BASKET_HEIGHT)
+            {
+                pt.X -= 5;
+                arr = GetBasketHeight(b24, pt.X, pt.Y);
+            }
+            if (arr[0] < BASKET_HEIGHT)
+            {
+                pt.X += 10;
+                arr = GetBasketHeight(b24, pt.X, pt.Y);
+            }
+            if (arr[0] < BASKET_HEIGHT)
+            {
+                return Point.Empty;
+            }
+            int yp = arr[1] - BASKET_HEIGHT / 2;
+            int left = Math.Max(5, pt.X - BASKET_WIDTH);
+            int rite = pt.X;
+            int xp = pt.X;
+            while (left <= rite)
+            {
+                int mid = (left + rite) / 2;
+                int[] color = b24.GetPixel(mid, yp);
+                if (RedBasketPixel(color))
+                {
+                    rite = mid - 1;
+                    xp = mid;
+                }
+                else
+                {
+                    left = mid + 1;
+                }
+            }
+            return new Point(xp + BASKET_WIDTH / 2, yp);
         }
 
-		private static Point FindAnyBasketPoint(Bitmap24 b24)
-		{
-			int dx = Math.Max(1, BASKET_WIDTH - 4);
-			int dy = Math.Max(1, BASKET_HEIGHT - 2);
-			for (int y = 50; y < b24.Bitmap.Height; y += dy)
-			{
-				for (int x = 5; x < b24.Bitmap.Width; x += dx)
-				{
-					int[] arr = b24.GetPixel(x, y);
-					if (RedBasketPixel(arr))
-					{
-						return new Point(x, y);
-					}
-				}
-			}
-			return Point.Empty;
-		}
-
-		private static Point PredictPosition(Point start, double[] v, double t, Rectangle bounds)
-		{
-			int dx = (int)(v[0] * t);
-			int dy = (int)(v[1] * t);
-			if (bounds.IsEmpty)
-			{
-				return new Point(start.X + dx, start.Y + dy);
-			}
-			dx %= Math.Max(1, 2 * bounds.Width);
-			dy %= Math.Max(1, 2 * bounds.Height);
-			int x = (int)(start.X + dx);
-			int y = (int)(start.Y + dy);
-			for (int i = 0; i < 2; i++)
-			{
-				if (x < bounds.Left)
-				{
-					x = Reflect(x, bounds.Left);
+        private static Point FindAnyBasketPoint(Bitmap24 b24)
+        {
+            int dx = Math.Max(1, BASKET_WIDTH - 4);
+            int dy = Math.Max(1, BASKET_HEIGHT - 2);
+            for (int y = 50; y < b24.Bitmap.Height; y += dy)
+            {
+                for (int x = 5; x < b24.Bitmap.Width; x += dx)
+                {
+                    int[] arr = b24.GetPixel(x, y);
+                    if (RedBasketPixel(arr))
+                    {
+                        return new Point(x, y);
+                    }
                 }
-				if (x > bounds.Right)
-				{
-					x = Reflect(x, bounds.Right);
-				}
-				if (y < bounds.Top)
-				{
-					y = Reflect(y, bounds.Top);
-				}
-				if (y > bounds.Bottom)
-				{
-					y = Reflect(y, bounds.Bottom);
-				}
-			}
-			return new Point(x, y);
-		}
+            }
+            return Point.Empty;
+        }
 
-		private static int Reflect(int pos, int axis)
-		{
-			return 2 * axis - pos;
-		}
+        private static Point PredictPosition(Point start, double[] v, double t, Rectangle bounds)
+        {
+            int dx = (int)(v[0] * t);
+            int dy = (int)(v[1] * t);
+            if (bounds.IsEmpty)
+            {
+                return new Point(start.X + dx, start.Y + dy);
+            }
+            dx %= Math.Max(1, 2 * bounds.Width);
+            dy %= Math.Max(1, 2 * bounds.Height);
+            int x = (int)(start.X + dx);
+            int y = (int)(start.Y + dy);
+            for (int i = 0; i < 2; i++)
+            {
+                if (x < bounds.Left)
+                {
+                    x = Reflect(x, bounds.Left);
+                }
+                if (x > bounds.Right)
+                {
+                    x = Reflect(x, bounds.Right);
+                }
+                if (y < bounds.Top)
+                {
+                    y = Reflect(y, bounds.Top);
+                }
+                if (y > bounds.Bottom)
+                {
+                    y = Reflect(y, bounds.Bottom);
+                }
+            }
+            return new Point(x, y);
+        }
 
-		private static int[] GetBasketHeight(Bitmap24 b24, int x, int y)
-		{
-			int last = 0;
-			int cnt = 0;
-			for (int dy = -BASKET_HEIGHT; dy <= BASKET_HEIGHT; dy++)
-			{
-				int[] arr = b24.GetPixel(x, y + dy);
-				if (RedBasketPixel(arr))
-				{
-					cnt++;
-					last = y + dy;
-				}
-			}
-			return new int[] { cnt, last };
-		}
+        private static int Reflect(int pos, int axis)
+        {
+            return 2 * axis - pos;
+        }
 
-		private static bool RedBasketPixel(int[] arr)
-		{
-			return arr[0] == 255 && arr[1] == 38 && arr[2] == 15;
-		}
+        private static int[] GetBasketHeight(Bitmap24 b24, int x, int y)
+        {
+            int last = 0;
+            int cnt = 0;
+            for (int dy = -BASKET_HEIGHT; dy <= BASKET_HEIGHT; dy++)
+            {
+                int[] arr = b24.GetPixel(x, y + dy);
+                if (RedBasketPixel(arr))
+                {
+                    cnt++;
+                    last = y + dy;
+                }
+            }
+            return new int[] { cnt, last };
+        }
+
+        private static bool RedBasketPixel(int[] arr)
+        {
+            return arr[0] == 255 && arr[1] == 38 && arr[2] == 15;
+        }
 
         private static string[] HANDLE_HIERARCHY = { "Bluestacks App Player", "", "Messenger", "BlueStacks Android Plugin" };
         private static IntPtr FindBluestacksHandle()
@@ -628,6 +569,184 @@ namespace Basketball
             else
             {
                 return new double[] { 175, 87 };
+            }
+        }
+
+        private static bool TakeShot(int level, Point ball, Point pred, double[] v)
+        {
+            if (level < 10)
+            {
+                return true;
+            }
+            else if (level < 20)
+            {
+                return Math.Abs(pred.X - ball.X) <= 200;
+            }
+            else if (level < 30)
+            {
+                return Math.Abs(pred.X - ball.X) <= 150;
+            }
+            else if (level < 40)
+            {
+                return Math.Abs(pred.X - ball.X) <= 125 && v[1] < 0;
+            }
+            else
+            {
+                return Math.Abs(pred.X - ball.X) <= 100 && pred.Y <= 300 && v[1] < 0;
+            }
+        }
+
+        private static bool AcceptableBasket(int level, Point rim)
+        {
+            if (level < 10)
+            {
+                return true;
+            }
+            else if (level < 30)
+            {
+                return rim.X > 500 && rim.X < 790;
+            }
+            else
+            {
+                return rim.X > 500 && rim.X < 790 && rim.Y > 240 && rim.Y < 350;
+            }
+        }
+
+        private static void DoSingleRun()
+        {
+            //Thread.Sleep(100);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
+
+            //AutoHotKey.RunAHK(@"AHK\Test");
+
+            IntPtr self = WindowWrapper.GetForegroundWindow();
+
+            Stopwatch tmr = new Stopwatch();
+            //double[] vel = CalculateVelocity(handle, 160);
+            //double[] v = TransformVelocity(vel);
+            Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
+            tmr.Start();
+            Bitmap bmp = WindowWrapper.TakeClientPicture(HANDLE);
+            Bitmap24 b24 = new Bitmap24(bmp);
+            b24.Lock();
+            Point ball = FindBasketball(b24);
+            Point rim = FindBasket(b24);
+            Point here = new Point(ball.X + rect.X, ball.Y + rect.Y);
+            Point basket = new Point(rim.X + rect.X, rim.Y + rect.Y);
+            b24.Unlock();
+            bmp.Dispose();
+
+            Console.WriteLine("relative rim: {0}", rim);
+            Console.WriteLine("absolute ball: {0}", ball);
+            Console.WriteLine("absolute basket: {0}", basket);
+            if (!ball.IsEmpty && !rim.IsEmpty)
+            {
+                Rectangle levelBounds = GetBoundsFor(LEVEL);
+                int[] sgn = GetVelocitySign(HANDLE, 100);
+                double[] vel = GetVelocitiesFor(LEVEL);
+                double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
+                Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
+                Console.WriteLine("L = {0}, R = {1}, T = {2}, B = {3}", levelBounds.Left, levelBounds.Right, levelBounds.Top, levelBounds.Bottom);
+                //Console.WriteLine("raw velocity: {0}, {1}", vel[0], vel[1]);
+                //Console.WriteLine("corrected velocity: {0}, {1}", v[0], v[1]);
+                WindowWrapper.BringToFront(HANDLE);
+                for (int i = 1; i <= 8; i++)
+                {
+                    double SHOT_TIME = 0.75;
+                    int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
+                    int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
+                    Point start = new Point(here.X, here.Y);
+                    Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
+                    Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                    //Point target = new Point(basket.X + dx, basket.Y + dy);
+                    Cursor.Position = start;
+                    Point shot = Shoot(start, target);
+                    Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                    //Rectangle upRect = new Rectangle(levelBounds.Location, new Size(levelBounds.Width + 1, levelBounds.Height + 1));
+                    //if (!upRect.Contains(pred))
+                    //{
+                    //    Console.WriteLine("      VIOLATION: shot out of defined bounds!");
+                    //}
+                }
+                LEVEL++;
+                Console.WriteLine("Advanced to level {0}", LEVEL);
+            }
+            else
+            {
+                Console.WriteLine("Error: failed to locate basket or ball.");
+            }
+
+            WindowWrapper.BringToFront(self);
+
+            //Cursor.Position = new Point(2171, 382);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
+            //Thread.Sleep(500);
+            //Cursor.Position = new Point(2171, 382);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
+
+            //Cursor.Position = new Point(2724, 540);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftClick");
+            //Cursor.Position = new Point(2724, 539);
+            //Thread.Sleep(1000);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftDown");
+            //Thread.Sleep(100);
+            //Cursor.Position = new Point(2257, 535);
+            //AutoHotKey.RunAHK(@"AHK\MouseLeftUp");
+        }
+
+        private static void AutoAim()
+        {
+            IntPtr self = WindowWrapper.GetForegroundWindow();
+            Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
+            Rectangle levelBounds = GetBoundsFor(LEVEL);
+            double[] vel = GetVelocitiesFor(LEVEL);
+            Stopwatch tmr = new Stopwatch();
+
+            bool fired = false;
+            while (!fired)
+            {
+                int[] sgn = GetVelocitySign(HANDLE, 80);
+                double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
+
+                Point ball = Point.Empty;
+                while (ball.IsEmpty)
+                {
+                    ball = FindBasketball(HANDLE);
+                }
+
+                Point rim = Point.Empty;
+                while (!rim.IsEmpty)
+                {
+                    tmr.Restart();
+                    rim = FindBasket(HANDLE);
+                }
+
+                WindowWrapper.BringToFront(HANDLE);
+
+                for (int i = 1; i <= 20; i++)
+                {
+                    double SHOT_TIME = 0.75;
+                    int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
+                    int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
+                    Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
+                    if (TakeShot(LEVEL, ball, pred, v))
+                    {
+                        fired = true;
+                        Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
+                        Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                        Cursor.Position = start;
+                        Point shot = Shoot(start, target);
+                        Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                    }
+                }
+
+                if (fired)
+                {
+                    LEVEL++;
+                    Console.WriteLine("Advanced to level {0}", LEVEL);
+                    WindowWrapper.BringToFront(self);
+                }
             }
         }
     }
