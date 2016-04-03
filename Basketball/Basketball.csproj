@@ -32,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AutoHotKeyNET">
-      <HintPath>lib\AutoHotKeyNET.dll</HintPath>
-    </Reference>
     <Reference Include="FastBitmap">
       <HintPath>lib\FastBitmap.dll</HintPath>
     </Reference>

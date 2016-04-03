@@ -157,15 +157,33 @@ namespace Basketball
                 }
             }
         }
-
-        private static Point GetShotVector(Point ball, Point hoop)
+        
+        private static Point Shoot(Point ball, Point hoop)
         {
             double dx = (hoop.X - ball.X) * 0.75;
             double dy = hoop.Y - ball.Y;
             double r = Math.Sqrt(dx * dx + dy * dy);
-            int x = (int)(dx / r * 72);
-            int y = (int)(dy / r * 72);
-            
+
+            // TODO:  find the best-matching integral vector between some lengths
+            //double a = Math.Asin(dy / r);
+            //int x = 0, y = 0;
+            //double minDiff = double.MaxValue;
+            //for (double s = 60; s <= 80; s += 0.25)
+            //{
+            //    int xt = (int)Math.Round(dx / r * s);
+            //    int yt = (int)Math.Round(dy / r * s);
+            //    double at = Math.Asin(yt / s);
+            //    double diff = Math.Abs(a - at);
+            //    if (diff < minDiff)
+            //    {
+            //        minDiff = diff;
+            //        x = xt;
+            //        y = yt;
+            //    }
+            //}
+
+            int x = (int)Math.Round(dx / r * 72);
+            int y = (int)Math.Round(dy / r * 72);
             InputSimulator sim = new InputSimulator();
             sim.Mouse.LeftButtonDown();
             Thread.Sleep(5);
@@ -415,8 +433,17 @@ namespace Basketball
 
         private static Point PredictPosition(Point start, double[] v, double t, Rectangle bounds)
         {
+            double[] vf;
+            return PredictPosition(start, v, t, bounds, out vf);
+        }
+
+        private static Point PredictPosition(Point start, double[] v, double t, Rectangle bounds, out double[] vf)
+        {
             int dx = (int)(v[0] * t);
             int dy = (int)(v[1] * t);
+            vf = new double[2];
+            vf[0] = v[0];
+            vf[1] = v[1];
             if (bounds.IsEmpty)
             {
                 return new Point(start.X + dx, start.Y + dy);
@@ -430,18 +457,22 @@ namespace Basketball
                 if (x < bounds.Left)
                 {
                     x = Reflect(x, bounds.Left);
+                    vf[0] *= -1;
                 }
                 if (x > bounds.Right)
                 {
                     x = Reflect(x, bounds.Right);
+                    vf[0] *= -1;
                 }
                 if (y < bounds.Top)
                 {
                     y = Reflect(y, bounds.Top);
+                    vf[0] *= -1;
                 }
                 if (y > bounds.Bottom)
                 {
                     y = Reflect(y, bounds.Bottom);
+                    vf[0] *= -1;
                 }
             }
             return new Point(x, y);
@@ -586,31 +617,15 @@ namespace Basketball
             }
             else if (level < 30)
             {
-                return Math.Abs(pred.X - ball.X) <= 150;
+                return Math.Abs(pred.X - ball.X) <= 100;
             }
             else if (level < 40)
             {
-                return Math.Abs(pred.X - ball.X) <= 125 && v[1] < 0;
+                return Math.Abs(pred.X - ball.X) <= 50;
             }
             else
             {
-                return Math.Abs(pred.X - ball.X) <= 100 && pred.Y <= 300 && v[1] < 0;
-            }
-        }
-
-        private static bool AcceptableBasket(int level, Point rim)
-        {
-            if (level < 10)
-            {
-                return true;
-            }
-            else if (level < 30)
-            {
-                return rim.X > 500 && rim.X < 790;
-            }
-            else
-            {
-                return rim.X > 500 && rim.X < 790 && rim.Y > 240 && rim.Y < 350;
+                return Math.Abs(pred.X - ball.X) <= 25;
             }
         }
 
@@ -651,7 +666,7 @@ namespace Basketball
                         Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
                         Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
                         Cursor.Position = start;
-                        Point shot = GetShotVector(start, target);
+                        Point shot = Shoot(start, target);
                         Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
                     }
                     LEVEL++;
@@ -693,11 +708,12 @@ namespace Basketball
                     int shots = 0;
                     for (int i = 1; i <= levelShots && !stop[0]; i++)
                     {
-                        double SHOT_TIME = 0.75;
+                        double SHOT_TIME = 0.8;
                         int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
                         int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
-                        Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
-                        if (TakeShot(LEVEL, ball, pred, v) && !stop[0])
+                        double[] vf;
+                        Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds, out vf);
+                        if (TakeShot(LEVEL, ball, pred, vf) && !stop[0])
                         {
                             if (shots == 0)
                             {
@@ -706,7 +722,7 @@ namespace Basketball
                             Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
                             Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
                             Cursor.Position = start;
-                            Point shot = GetShotVector(start, target);
+                            Point shot = Shoot(start, target);
                             Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
                             shots++;
                         }
