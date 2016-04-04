@@ -607,25 +607,27 @@ namespace Basketball
 
         private static bool TakeShot(int level, Point ball, Point pred, double[] v)
         {
+            int dx = pred.X - ball.X;
+            int dy = pred.Y - ball.Y;
             if (level < 10)
             {
                 return true;
             }
             else if (level < 20)
             {
-                return Math.Abs(pred.X - ball.X) <= 200;
+                return Math.Abs(dx) <= 160;
             }
             else if (level < 30)
             {
-                return Math.Abs(pred.X - ball.X) <= 100;
+                return Math.Abs(dx) <= 80;
             }
             else if (level < 40)
             {
-                return Math.Abs(pred.X - ball.X) <= 50;
+                return Math.Abs(dx) <= 40;
             }
             else
             {
-                return Math.Abs(pred.X - ball.X) <= 25;
+                return Math.Abs(dx) <= 20 && Math.Abs(dx * 72) <= Math.Abs(dy * 3);
             }
         }
 
