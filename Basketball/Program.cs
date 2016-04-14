@@ -37,10 +37,6 @@ namespace Basketball
                 } while (input.Length == 0);
                 switch (input[0].ToUpper())
                 {
-                    case "TEMP":
-                        Console.WriteLine(FindBasketball(HANDLE));
-                        Console.WriteLine(FindBasket(HANDLE));
-                        break;
                     case "CURSOR":
                         Point pt = Cursor.Position;
                         Console.WriteLine("Cursor: ({0}, {1})", pt.X, pt.Y);
@@ -93,9 +89,6 @@ namespace Basketball
                         Console.WriteLine("rite = " + bounds.Right);
                         Console.WriteLine("top  = " + bounds.Top);
                         Console.WriteLine("bot  = " + bounds.Bottom);
-                        break;
-                    case "TEST":
-                        DoSingleRun();
                         break;
                     case "AUTO":
                         AutoAim();
@@ -642,59 +635,6 @@ namespace Basketball
             {
                 return Math.Abs(dx) <= 40 && Math.Abs(dx * 20) <= Math.Abs(dy);
             }
-        }
-
-        private static void DoSingleRun()
-        {
-            IntPtr self = WindowWrapper.GetForegroundWindow();
-
-            Stopwatch tmr = new Stopwatch();
-            Rectangle rect = WindowWrapper.GetClientArea(HANDLE);
-            tmr.Start();
-            Bitmap bmp = WindowWrapper.TakeClientPicture(HANDLE);
-            using (Bitmap24 b24 = Bitmap24.FromImage(bmp))
-            {
-                b24.Lock();
-                Point ball = FindBasketball(b24);
-                Point rim = FindBasket(b24);
-                Point here = new Point(ball.X + rect.X, ball.Y + rect.Y);
-                Point basket = new Point(rim.X + rect.X, rim.Y + rect.Y);
-
-                Console.WriteLine("relative rim: {0}", rim);
-                Console.WriteLine("absolute ball: {0}", ball);
-                Console.WriteLine("absolute basket: {0}", basket);
-                if (!ball.IsEmpty && !rim.IsEmpty)
-                {
-                    Rectangle levelBounds = GetBoundsFor(LEVEL);
-                    int[] sgn = GetVelocitySign(HANDLE, 100);
-                    double[] vel = GetVelocitiesFor(LEVEL);
-                    double[] v = { sgn[0] * vel[0], sgn[1] * vel[1] };
-                    Console.WriteLine("v = <{0}, {1}>", v[0], v[1]);
-                    Console.WriteLine("L = {0}, R = {1}, T = {2}, B = {3}", levelBounds.Left, levelBounds.Right, levelBounds.Top, levelBounds.Bottom);
-                    WindowWrapper.BringToFront(HANDLE);
-                    for (int i = 1; i <= 8; i++)
-                    {
-                        double SHOT_TIME = 1.0;
-                        int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
-                        int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
-                        Point start = new Point(here.X, here.Y);
-                        Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds);
-                        Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                        Cursor.Position = start;
-                        Point shot = Shoot(start, target);
-                        Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
-                    }
-                    LEVEL++;
-                    Console.WriteLine("Advanced to level {0}", LEVEL);
-                }
-                else
-                {
-                    Console.WriteLine("Error: failed to locate basket or ball.");
-                }
-                b24.Unlock();
-                bmp.Dispose();
-            }
-            WindowWrapper.BringToFront(self);
         }
 
         private static void AutoAim()
