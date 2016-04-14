@@ -11,8 +11,10 @@
 1. Download and install [Bluestacks 2](http://www.bluestacks.com).
 2. Change Bluestacks 2 on-screen resolution to 1280×720:
   1. In the registry, navigate to key: HKEY_LOCAL_MACHINE/SOFTWARE/BlueStacks/Guests/Android/FrameBuffer/0
-  2. Change WindowWidth value to 1280 (decimal base).
-  3. Change WindowHeight value to 720 (decimal base).
+  2. Change GuestWidth value to 1280 (decimal base).
+  3. Change GuestHeight value to 720 (decimal base).
+  4. Change WindowWidth value to 1280 (decimal base).
+  5. Change WindowHeight value to 720 (decimal base).
 3. Install Messenger on Bluestacks 2.
 
 ## Running the bot (subject to change!)
