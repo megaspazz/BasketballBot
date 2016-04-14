@@ -166,7 +166,7 @@ namespace Basketball
         {
             int dx = hoop.X - ball.X;
             int dy = hoop.Y - ball.Y;
-            double r = Math.Sqrt(dx * dx + dy * dy);
+
 
             // TODO:  find the best-matching integral vector between some lengths
             //double a = Math.Asin(dy / r);
@@ -186,16 +186,39 @@ namespace Basketball
             //    }
             //}
 
+            //double r = Math.Sqrt(dx * dx + dy * dy);
             //int x = (int)Math.Round(dx / r * 400);
             //int y = (int)Math.Round(dy / r * 400);
 
+            // TODO: click-and-drag
+            //InputSimulator sim = new InputSimulator();
+            //Cursor.Position = ball;
+            //Thread.Sleep(100);
+            //sim.Mouse.LeftButtonDown();
+            //sim.Mouse.LeftButtonDown();
+            //sim.Mouse.LeftButtonDown();
+            //int ITER_STEPS = 10;
+            //for (int i = 0; i < ITER_STEPS; i++)
+            //{
+            //    int xp = (int)Math.Round(i * dx / ITER_STEPS);
+            //    int yp = (int)Math.Round(i * dy / ITER_STEPS);
+            //    int xn = (int)Math.Round((i + 1) * dx / ITER_STEPS);
+            //    int yn = (int)Math.Round((i + 1) * dy / ITER_STEPS);
+            //    sim.Mouse.MoveMouseBy(xn - xp, yn - yp);
+            //    Thread.Sleep(10);
+            //}
+            //Thread.Sleep(50);
+            //sim.Mouse.LeftButtonUp();
+            //sim.Mouse.LeftButtonUp();
+            //sim.Mouse.LeftButtonUp();
+
             InputSimulator sim = new InputSimulator();
             Cursor.Position = ball;
-            Thread.Sleep(80);
+            Thread.Sleep(100);
             sim.Mouse.LeftButtonDown();
-            Thread.Sleep(80);
+            Thread.Sleep(100);
             sim.Mouse.MoveMouseBy(dx, dy);
-            Thread.Sleep(40);
+            Thread.Sleep(50);
             sim.Mouse.LeftButtonUp();
 
             return new Point(dx, dy);
@@ -625,15 +648,15 @@ namespace Basketball
             }
             else if (level < 30)
             {
-                return Math.Abs(dx) <= 120;
+                return Math.Abs(dx) <= 100;
             }
             else if (level < 40)
             {
-                return Math.Abs(dx) <= 80;
+                return Math.Abs(dx) <= 40;
             }
             else
             {
-                return Math.Abs(dx) <= 40 && Math.Abs(dx * 20) <= Math.Abs(dy);
+                return Math.Abs(dx) <= 10 && Math.Abs(dx * 40) <= Math.Abs(dy);
             }
         }
 
@@ -661,9 +684,9 @@ namespace Basketball
                 double[] v = ValidateVelocityFor(LEVEL, vel);
                 if (!ball.IsEmpty && !rim.IsEmpty && v != null)
                 {
-                    double SHOT_TIME = 1.0;
-                    int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
-                    int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
+                    double BASE_TIME = 0.75;
+                    double XTRA_TIME = 0.25;
+                    double SHOT_TIME = BASE_TIME + XTRA_TIME;
                     double[] vf;
                     Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds, out vf);
                     if (TakeShot(LEVEL, ball, pred, vf) && !stop[0])
