@@ -167,27 +167,10 @@ namespace Basketball
             int dx = hoop.X - ball.X;
             int dy = hoop.Y - ball.Y;
 
-            // TODO: find the best-matching integral vector between some lengths
-            //double a = Math.Asin(dy / r);
-            //int x = 0, y = 0;
-            //double minDiff = double.MaxValue;
-            //for (double s = 60; s <= 80; s += 0.25)
-            //{
-            //    int xt = (int)Math.Round(dx / r * s);
-            //    int yt = (int)Math.Round(dy / r * s);
-            //    double at = Math.Asin(yt / s);
-            //    double diff = Math.Abs(a - at);
-            //    if (diff < minDiff)
-            //    {
-            //        minDiff = diff;
-            //        x = xt;
-            //        y = yt;
-            //    }
-            //}
-
             double r = Math.Sqrt(dx * dx + dy * dy);
             int x = (int)Math.Round(dx / r * 72);
             int y = (int)Math.Round(dy / r * 72);
+            Cursor.Position = ball;
             SIM.Mouse.LeftButtonDown();
             Thread.Sleep(5);
             SIM.Mouse.MoveMouseBy(x, y);
@@ -195,39 +178,7 @@ namespace Basketball
             SIM.Mouse.LeftButtonUp();
             Thread.Sleep(5);
 
-            // TODO: click-and-drag
-            //InputSimulator sim = new InputSimulator();
-            //Cursor.Position = ball;
-            //Thread.Sleep(100);
-            //sim.Mouse.LeftButtonDown();
-            //sim.Mouse.LeftButtonDown();
-            //sim.Mouse.LeftButtonDown();
-            //int ITER_STEPS = 10;
-            //for (int i = 0; i < ITER_STEPS; i++)
-            //{
-            //    int xp = (int)Math.Round(i * dx / ITER_STEPS);
-            //    int yp = (int)Math.Round(i * dy / ITER_STEPS);
-            //    int xn = (int)Math.Round((i + 1) * dx / ITER_STEPS);
-            //    int yn = (int)Math.Round((i + 1) * dy / ITER_STEPS);
-            //    sim.Mouse.MoveMouseBy(xn - xp, yn - yp);
-            //    Thread.Sleep(10);
-            //}
-            //Thread.Sleep(50);
-            //sim.Mouse.LeftButtonUp();
-            //sim.Mouse.LeftButtonUp();
-            //sim.Mouse.LeftButtonUp();
-
-            // TODO: New method of carefully aimed shots
-            //InputSimulator sim = new InputSimulator();
-            //Cursor.Position = ball;
-            //Thread.Sleep(100);
-            //sim.Mouse.LeftButtonDown();
-            //Thread.Sleep(100);
-            //sim.Mouse.MoveMouseBy(dx, dy);
-            //Thread.Sleep(50);
-            //sim.Mouse.LeftButtonUp();
-
-            return new Point(dx, dy);
+            return new Point(x, y);
         }
 
         private static readonly int BALL_Y = 643;
@@ -707,7 +658,6 @@ namespace Basketball
                             }
                             Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
                             Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                            Cursor.Position = start;
                             Point shot = Shoot(start, target);
                             Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
                             shots++;
@@ -717,7 +667,7 @@ namespace Basketball
                     if (shots > 0)
                     {
                         WindowWrapper.BringToFront(self);
-                        if (shots < 4)
+                        if (shots <= 2)
                         {
                             Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
                         }
