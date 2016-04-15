@@ -19,6 +19,7 @@ namespace Basketball
 {
     class Program
     {
+        private static InputSimulator SIM = new InputSimulator();
         private static int LEVEL = 0;
         private static IntPtr HANDLE;
 
@@ -158,8 +159,7 @@ namespace Basketball
         private static void MoveMouseTo(Point dest)
         {
             Point init = Cursor.Position;
-            InputSimulator sim = new InputSimulator();
-            sim.Mouse.MoveMouseBy(dest.X - init.X, dest.Y - init.Y);
+            SIM.Mouse.MoveMouseBy(dest.X - init.X, dest.Y - init.Y);
         }
         
         private static Point Shoot(Point ball, Point hoop)
@@ -167,8 +167,7 @@ namespace Basketball
             int dx = hoop.X - ball.X;
             int dy = hoop.Y - ball.Y;
 
-
-            // TODO:  find the best-matching integral vector between some lengths
+            // TODO: find the best-matching integral vector between some lengths
             //double a = Math.Asin(dy / r);
             //int x = 0, y = 0;
             //double minDiff = double.MaxValue;
@@ -186,9 +185,15 @@ namespace Basketball
             //    }
             //}
 
-            //double r = Math.Sqrt(dx * dx + dy * dy);
-            //int x = (int)Math.Round(dx / r * 400);
-            //int y = (int)Math.Round(dy / r * 400);
+            double r = Math.Sqrt(dx * dx + dy * dy);
+            int x = (int)Math.Round(dx / r * 72);
+            int y = (int)Math.Round(dy / r * 72);
+            SIM.Mouse.LeftButtonDown();
+            Thread.Sleep(5);
+            SIM.Mouse.MoveMouseBy(x, y);
+            Thread.Sleep(5);
+            SIM.Mouse.LeftButtonUp();
+            Thread.Sleep(5);
 
             // TODO: click-and-drag
             //InputSimulator sim = new InputSimulator();
@@ -212,14 +217,15 @@ namespace Basketball
             //sim.Mouse.LeftButtonUp();
             //sim.Mouse.LeftButtonUp();
 
-            InputSimulator sim = new InputSimulator();
-            Cursor.Position = ball;
-            Thread.Sleep(100);
-            sim.Mouse.LeftButtonDown();
-            Thread.Sleep(100);
-            sim.Mouse.MoveMouseBy(dx, dy);
-            Thread.Sleep(50);
-            sim.Mouse.LeftButtonUp();
+            // TODO: New method of carefully aimed shots
+            //InputSimulator sim = new InputSimulator();
+            //Cursor.Position = ball;
+            //Thread.Sleep(100);
+            //sim.Mouse.LeftButtonDown();
+            //Thread.Sleep(100);
+            //sim.Mouse.MoveMouseBy(dx, dy);
+            //Thread.Sleep(50);
+            //sim.Mouse.LeftButtonUp();
 
             return new Point(dx, dy);
         }
@@ -612,10 +618,10 @@ namespace Basketball
         {
             if (level < 40)
             {
-                return 1;
+                return 20;
             } else
             {
-                return 1;
+                return 8;
             }
         }
 
@@ -656,7 +662,7 @@ namespace Basketball
             }
             else
             {
-                return Math.Abs(dx) <= 10 && Math.Abs(dx * 40) <= Math.Abs(dy);
+                return Math.Abs(dx) <= 20 && Math.Abs(dx * 20) <= Math.Abs(dy);
             }
         }
 
@@ -672,9 +678,8 @@ namespace Basketball
             Rectangle levelBounds = GetBoundsFor(LEVEL);
             int levelShots = GetShotsFor(LEVEL);
             Stopwatch tmr = new Stopwatch();
-            bool shotTaken = false;
 
-            while (!stop[0] && !shotTaken)
+            while (!stop[0])
             {
                 Bitmap24 b24;
                 double[] vel = CalculateVelocity(HANDLE, 100, out b24);
@@ -684,23 +689,44 @@ namespace Basketball
                 double[] v = ValidateVelocityFor(LEVEL, vel);
                 if (!ball.IsEmpty && !rim.IsEmpty && v != null)
                 {
-                    double BASE_TIME = 0.75;
-                    double XTRA_TIME = 0.25;
-                    double SHOT_TIME = BASE_TIME + XTRA_TIME;
-                    double[] vf;
-                    Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds, out vf);
-                    if (TakeShot(LEVEL, ball, pred, vf) && !stop[0])
+                    int shots = 0;
+                    for (int i = 1; i <= levelShots && !stop[0]; i++)
                     {
-                        WindowWrapper.BringToFront(HANDLE);
-                        Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
-                        Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
-                        //Cursor.Position = start;
-                        Point shot = Shoot(start, target);
+                        double BASE_TIME = 0.750;
+                        double XTRA_TIME = 0.015;
+                        double SHOT_TIME = BASE_TIME + XTRA_TIME;
+                        int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
+                        int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
+                        double[] vf;
+                        Point pred = PredictPosition(rim, v, SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0, levelBounds, out vf);
+                        if (TakeShot(LEVEL, ball, pred, vf) && !stop[0])
+                        {
+                            if (shots == 0)
+                            {
+                                WindowWrapper.BringToFront(HANDLE);
+                            }
+                            Point start = new Point(ball.X + rect.X, ball.Y + rect.Y);
+                            Point target = new Point(pred.X + rect.X, pred.Y + rect.Y);
+                            Cursor.Position = start;
+                            Point shot = Shoot(start, target);
+                            Console.WriteLine("  -> Shot {0}: pred = {1}, target = {2}, vector = <{3}, {4}>", i, pred, target, shot.X, shot.Y);
+                            shots++;
+                        }
+                    }
+
+                    if (shots > 0)
+                    {
                         WindowWrapper.BringToFront(self);
-                        Console.WriteLine("  -> Shoot: ball = {0}, hoop = {1}, vector = <{2}, {3}>", start, target, shot.X, shot.Y);
-                        LEVEL++;
-                        Console.WriteLine("Advanced to level {0}", LEVEL);
-                        shotTaken = true;
+                        if (shots < 4)
+                        {
+                            Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
+                        }
+                        else
+                        {
+                            LEVEL++;
+                            Console.WriteLine("Advanced to level {0}", LEVEL);
+                            break;
+                        }
                     }
                 }
                 b24.Dispose();

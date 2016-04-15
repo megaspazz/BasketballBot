@@ -9,7 +9,8 @@
 
 ## Install and Configure Bluestacks 2
 1. Download and install [Bluestacks 2](http://www.bluestacks.com).
-2. Change Bluestacks 2 on-screen resolution to 1280×720:
+  * NOTE: As of 04/14/2016, if you want to stream with [Open Broadcaster Software (OBS)](https://obsproject.com/), the newest version of the Bluestacks App Player (version 2.2.19.6015) will not work since it has issues with click-and-drag when OBS is running, which is necessary to shoot the basketball.  You can [download version 2.1.8.5663 here](http://www.mediafire.com/download/q6ct1dzuzttpqaf/BlueStacks2_native.exe).
+2. Change Bluestacks 2 internal and on-screen resolutions to 1280×720:
   1. In the registry, navigate to key: HKEY_LOCAL_MACHINE/SOFTWARE/BlueStacks/Guests/Android/FrameBuffer/0
   2. Change GuestWidth value to 1280 (decimal base).
   3. Change GuestHeight value to 720 (decimal base).
@@ -33,8 +34,6 @@
     * `derank` decrements the level counter by one.
     * `uprank` increases the level counter by one.
   * Shooting commands:
-    * `test` runs a very primitive version of the bot.  It might miss, especially for longer shots.
-      * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
     * `auto` takes a well-aimed shot that only fires when the basket is in a good position.  This is almost guaranteed to make the shot.
       * Make sure that the level is correctly set before using this command.
       * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
