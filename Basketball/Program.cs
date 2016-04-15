@@ -171,6 +171,7 @@ namespace Basketball
             int x = (int)Math.Round(dx / r * 72);
             int y = (int)Math.Round(dy / r * 72);
             Cursor.Position = ball;
+            Thread.Sleep(5);
             SIM.Mouse.LeftButtonDown();
             Thread.Sleep(5);
             SIM.Mouse.MoveMouseBy(x, y);
@@ -622,6 +623,7 @@ namespace Basketball
             AutoAim(new bool[1]);
         }
 
+        private static int MIN_SHOTS = 3;
         private static void AutoAim(bool[] stop)
         {
             IntPtr self = WindowWrapper.GetForegroundWindow();
@@ -630,7 +632,8 @@ namespace Basketball
             int levelShots = GetShotsFor(LEVEL);
             Stopwatch tmr = new Stopwatch();
 
-            while (!stop[0])
+            int shots = 0;
+            while (!stop[0] && shots <= MIN_SHOTS)
             {
                 Bitmap24 b24;
                 double[] vel = CalculateVelocity(HANDLE, 100, out b24);
@@ -640,11 +643,10 @@ namespace Basketball
                 double[] v = ValidateVelocityFor(LEVEL, vel);
                 if (!ball.IsEmpty && !rim.IsEmpty && v != null)
                 {
-                    int shots = 0;
                     for (int i = 1; i <= levelShots && !stop[0]; i++)
                     {
                         double BASE_TIME = 0.750;
-                        double XTRA_TIME = 0.015;
+                        double XTRA_TIME = 0.020;
                         double SHOT_TIME = BASE_TIME + XTRA_TIME;
                         int dx = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[0]);
                         int dy = (int)Math.Round((SHOT_TIME + tmr.ElapsedMilliseconds / 1000.0) * v[1]);
@@ -667,15 +669,15 @@ namespace Basketball
                     if (shots > 0)
                     {
                         WindowWrapper.BringToFront(self);
-                        if (shots <= 2)
+                        if (shots <= 3)
                         {
+                            shots = 0;
                             Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
                         }
                         else
                         {
                             LEVEL++;
                             Console.WriteLine("Advanced to level {0}", LEVEL);
-                            break;
                         }
                     }
                 }
