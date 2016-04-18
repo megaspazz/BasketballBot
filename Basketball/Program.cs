@@ -669,7 +669,7 @@ namespace Basketball
                     if (shots > 0)
                     {
                         WindowWrapper.BringToFront(self);
-                        if (shots <= 3)
+                        if (shots <= 2)
                         {
                             shots = 0;
                             Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);

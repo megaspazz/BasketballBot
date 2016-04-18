@@ -32,7 +32,7 @@
     * `setlevel ###` sets the internal level counter to the number you specify.  Levels are important because they determine the parameters of the game that allow the bot to predict the position of the basket, such as the velocity of the basket and the boundaries of movement.
     * `reset` sets the level counter to zero.
     * `derank` decrements the level counter by one.
-    * `uprank` increases the level counter by one.
+    * `uprank` increments the level counter by one.
   * Shooting commands:
     * `auto` takes a well-aimed shot that only fires when the basket is in a good position.  This is almost guaranteed to make the shot.
       * Make sure that the level is correctly set before using this command.
@@ -41,6 +41,9 @@
       * Make sure that the level is correctly set before using this command.
       * Make sure that the console and other windows are not obstructing the game area in Bluestacks.
       * You can terminate this command at any time by pressing a key in the console while this command is running.  Make sure the console has the focus; the console should have focus most of the time, except when it's taking the shot.
+
+## Additional Notes
+* You may want to change the process priority to High in Task Manager for both Bluestacks and the Basketball bot.  However, it's unclear if this will actually help.
 
 ## Acknowledgements
 * [swishx](https://github.com/swishx) a.k.a. "Hu Boy"
