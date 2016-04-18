@@ -19,7 +19,8 @@ namespace Basketball
 {
     class Program
     {
-        private static InputSimulator SIM = new InputSimulator();
+        private static readonly InputSimulator SIM = new InputSimulator();
+
         private static int LEVEL = 0;
         private static IntPtr HANDLE;
 
@@ -623,7 +624,7 @@ namespace Basketball
             AutoAim(new bool[1]);
         }
 
-        private static int MIN_SHOTS = 3;
+        private static readonly int MIN_SHOTS = 3;
         private static void AutoAim(bool[] stop)
         {
             IntPtr self = WindowWrapper.GetForegroundWindow();
@@ -669,7 +670,7 @@ namespace Basketball
                     if (shots > 0)
                     {
                         WindowWrapper.BringToFront(self);
-                        if (shots <= 2)
+                        if (shots <= MIN_SHOTS)
                         {
                             shots = 0;
                             Console.WriteLine("Too few shots taken, remained at level {0}", LEVEL);
